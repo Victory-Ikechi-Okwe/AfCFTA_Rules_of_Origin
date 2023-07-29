@@ -17,6 +17,85 @@ async fn accept_connection(peer: SocketAddr, stream: TcpStream) {
     }
 }
 
+fn process_cmd(cmd: &serde_json::Value, data: &serde_json::Value) {
+    match (cmd, data) {
+        (serde_json::Value::String(s), serde_json::Value::Object(o)) => {
+            match s.as_str() {
+                "foo" => {
+                    debug!("foo")
+                },
+                _ => {
+                    debug!("other")
+                }
+            }
+        },
+        _ => {
+        }
+    }
+}
+
+fn process_text(t: String) {
+    info!("text: {:?}", t);
+    let v: serde_json::Result<serde_json::Value> = serde_json::from_str(t.as_str());
+    match v {
+        Ok(serde_json::Value::Array(a)) => {
+            match a.len() {
+                2 => {
+                    process_cmd(&a[0], &a[1]);
+                },
+                _ => {
+                    debug!("wrong size");
+                }
+            }
+        },
+        Ok(_) => {
+            debug!("valid but not interested");
+        },
+        Err(err) => {
+            debug!("error: {:?}", err);
+        }
+    }
+}
+
+fn process(msg: Option<Result<Message, tungstenite::Error>>) -> bool {
+    match msg {
+        Some(Ok(Message::Text(t))) => {
+            process_text(t);
+            true
+        },
+        Some(Ok(Message::Binary(_))) => {
+            info!("binary");
+            true
+        },
+        Some(Ok(Message::Ping(_) | Message::Pong(_))) => {
+            info!("ping/pong");
+            true
+        }
+        Some(Err(TTError::Capacity(MessageTooLong{size, max_size}))) => {
+            info!("size");
+            true
+        },
+        None |
+        Some(Ok(Message::Close(_)) |
+             Err(TTError::AlreadyClosed | TTError::ConnectionClosed |
+                 TTError::Protocol(tungstenite::error::ProtocolError::ResetWithoutClosingHandshake)))
+            => {
+                info!("close or error");
+                false
+            },
+        Some(Err(TTError::Io(e))) => {
+            // IO errors are considered fatal
+            warn!("io error: {:?}", e);
+            false
+        }
+        x => {
+            // default condition on error is to close the client connection
+            info!("unknown: {:?}", x);
+            false
+        }
+    }
+}
+
 async fn handle_connection(peer: SocketAddr, stream: TcpStream) -> TTResult<()> {
     let ws_stream = accept_async(stream).await.expect("Failed to accept");
     info!("New WebSocket connection: {}", peer);
@@ -25,50 +104,9 @@ async fn handle_connection(peer: SocketAddr, stream: TcpStream) -> TTResult<()> 
     loop {
         tokio::select! {
             msg = ws_receiver.next() => {
-                match msg {
-                    Some(Ok(Message::Text(t))) => {
-                        info!("text: {:?}", t);
-                        let v: serde_json::Result<serde_json::Value> = serde_json::from_str(t.as_str());
-                        match v {
-                            Ok(o) => {
-                                debug!("json: {:?}", o);
-                            },
-                            Err(err) => {
-                                debug!("error: {:?}", err);
-                            }
-                        }
-                        continue;
-                    },
-                    Some(Ok(Message::Binary(_))) => {
-                        info!("binary");
-                        continue;
-                    },
-                    Some(Ok(Message::Ping(_) | Message::Pong(_))) => {
-                        info!("ping/pong");
-                        continue;
-                    }
-                    Some(Err(TTError::Capacity(MessageTooLong{size, max_size}))) => {
-                        info!("size");
-                        continue;
-                    },
-                    None |
-                    Some(Ok(Message::Close(_)) |
-                         Err(TTError::AlreadyClosed | TTError::ConnectionClosed |
-                             TTError::Protocol(tungstenite::error::ProtocolError::ResetWithoutClosingHandshake)))
-                        => {
-                            info!("close or error");
-                            break;
-                        },
-                    Some(Err(TTError::Io(e))) => {
-                        // IO errors are considered fatal
-                        warn!("io error: {:?}", e);
-                        break;
-                    }
-                    x => {
-                        // default condition on error is to close the client connection
-                        info!("unknown: {:?}", x);
-                        break;
-                    }
+                match process(msg) {
+                    true => continue,
+                    false => break,
                 }
             }
             // _ = interval.tick() => {
