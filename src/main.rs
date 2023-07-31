@@ -75,7 +75,7 @@ fn process(msg: Option<Result<Message, tungstenite::Error>>) -> bool {
             info!("ping/pong");
             true
         }
-        Some(Err(TTError::Capacity(MessageTooLong{size, max_size}))) => {
+        Some(Err(TTError::Capacity(MessageTooLong{size: _, max_size: _}))) => {
             info!("size");
             true
         },
@@ -103,7 +103,7 @@ fn process(msg: Option<Result<Message, tungstenite::Error>>) -> bool {
 async fn handle_connection(peer: SocketAddr, stream: TcpStream) -> TTResult<()> {
     let ws_stream = accept_async(stream).await.expect("Failed to accept");
     info!("New WebSocket connection: {}", peer);
-    let (mut ws_sender, mut ws_receiver) = ws_stream.split();
+    let (mut _ws_sender, mut ws_receiver) = ws_stream.split();
 
     loop {
         tokio::select! {
