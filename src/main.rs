@@ -17,16 +17,16 @@ async fn accept_connection(peer: SocketAddr, stream: TcpStream) {
     }
 }
 
-fn do_submit(o: &serde_json::Map<String, serde_json::Value>) {
-    debug!("submit: {:?}", o);
+fn do_submit(args: &Vec<serde_json::Value>, d: &serde_json::Map<String, serde_json::Value>) {
+    debug!("submit: {:?}, {:?}", args, d);
 }
 
-fn process_cmd(cmd: &serde_json::Value, data: &serde_json::Value) {
-    match (cmd, data) {
-        (serde_json::Value::String(s), serde_json::Value::Object(o)) => {
-            match s.as_str() {
+fn process_cmd(cmd_v: &serde_json::Value, args_v: &serde_json::Value, doc_v: &serde_json::Value) {
+    match (cmd_v, args_v, doc_v) {
+        (serde_json::Value::String(cmd), serde_json::Value::Array(args), serde_json::Value::Object(d)) => {
+            match cmd.as_str() {
                 "SUBMIT" => {
-                    do_submit(o);
+                    do_submit(args, d);
                 },
                 _ => {
                     debug!("other")
@@ -44,8 +44,8 @@ fn process_text(t: String) {
     match v {
         Ok(serde_json::Value::Array(a)) => {
             match a.len() {
-                2 => {
-                    process_cmd(&a[0], &a[1]);
+                3 => {
+                    process_cmd(&a[0], &a[1], &a[2]);
                 },
                 _ => {
                     debug!("wrong size");
