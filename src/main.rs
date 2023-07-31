@@ -17,12 +17,16 @@ async fn accept_connection(peer: SocketAddr, stream: TcpStream) {
     }
 }
 
+fn do_submit(o: &serde_json::Map<String, serde_json::Value>) {
+    debug!("submit: {:?}", o);
+}
+
 fn process_cmd(cmd: &serde_json::Value, data: &serde_json::Value) {
     match (cmd, data) {
         (serde_json::Value::String(s), serde_json::Value::Object(o)) => {
             match s.as_str() {
-                "foo" => {
-                    debug!("foo")
+                "SUBMIT" => {
+                    do_submit(o);
                 },
                 _ => {
                     debug!("other")
