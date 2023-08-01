@@ -2,6 +2,7 @@ use futures_util::{StreamExt};
 use log::*;
 use std::{net::SocketAddr};
 use tokio::net::{TcpListener, TcpStream};
+use tokio::sync::mpsc;
 use tokio_tungstenite::accept_async;
 use tokio_tungstenite::tungstenite::Message;
 use tokio_tungstenite::tungstenite::Error as TTError;
@@ -17,54 +18,86 @@ async fn accept_connection(peer: SocketAddr, stream: TcpStream) {
     }
 }
 
-fn do_submit(args: &Vec<serde_json::Value>, d: &serde_json::Map<String, serde_json::Value>) {
-    debug!("submit: {:?}, {:?}", args, d);
+
+#[derive(Debug)]
+enum Action {
+    Submit,
 }
 
-fn process_cmd(cmd_v: &serde_json::Value, args_v: &serde_json::Value, doc_v: &serde_json::Value) {
+
+#[derive(Debug)]
+enum Error {
+    UnknownAction,
+    InvalidAction,
+    Protocol,
+    Json {
+        err: serde_json::Error
+    },
+}
+
+fn do_submit(
+    args: &Vec<serde_json::Value>,
+    d: &serde_json::Map<String, serde_json::Value>
+) -> Action {
+    debug!("submit: {:?}, {:?}", args, d);
+    Action::Submit
+}
+
+fn process_cmd(
+    cmd_v: &serde_json::Value,
+    args_v: &serde_json::Value,
+    doc_v: &serde_json::Value
+) -> Result<Action, Error> {
     match (cmd_v, args_v, doc_v) {
         (serde_json::Value::String(cmd), serde_json::Value::Array(args), serde_json::Value::Object(d)) => {
             match cmd.as_str() {
                 "SUBMIT" => {
-                    do_submit(args, d);
+                    Ok(do_submit(args, d))
                 },
                 _ => {
-                    debug!("other")
+                    Err(Error::UnknownAction)
                 }
             }
         },
         _ => {
+            Err(Error::InvalidAction)
         }
     }
 }
 
-fn process_text(t: String) {
+fn process_text(t: String) -> Result<Action, Error> {
     info!("text: {:?}", t);
     let v: serde_json::Result<serde_json::Value> = serde_json::from_str(t.as_str());
     match v {
         Ok(serde_json::Value::Array(a)) => {
             match a.len() {
                 3 => {
-                    process_cmd(&a[0], &a[1], &a[2]);
+                    process_cmd(&a[0], &a[1], &a[2])
                 },
                 _ => {
-                    debug!("wrong size");
+                    Err(Error::Protocol)
                 }
             }
         },
         Ok(_) => {
             debug!("valid but not interested");
+            Err(Error::Protocol)
         },
         Err(err) => {
-            debug!("error: {:?}", err);
+            Err(Error::Json { err: err })
         }
     }
 }
 
-fn process(msg: Option<Result<Message, tungstenite::Error>>) -> bool {
+fn process(tx: tokio::sync::mpsc::Sender<Result<Action, Error>>, msg: Option<Result<Message, tungstenite::Error>>) -> bool {
     match msg {
         Some(Ok(Message::Text(t))) => {
-            process_text(t);
+            tokio::spawn(async move {
+                let proc_res = process_text(t);
+                if let Err(err) = tx.send(proc_res).await {
+                    debug!("failed send: {:?}", err);
+                }
+            });
             true
         },
         Some(Ok(Message::Binary(_))) => {
@@ -104,14 +137,18 @@ async fn handle_connection(peer: SocketAddr, stream: TcpStream) -> TTResult<()> 
     let ws_stream = accept_async(stream).await.expect("Failed to accept");
     info!("New WebSocket connection: {}", peer);
     let (mut _ws_sender, mut ws_receiver) = ws_stream.split();
+    let (tx, mut rx) = mpsc::channel(64);
 
     loop {
         tokio::select! {
             msg = ws_receiver.next() => {
-                match process(msg) {
+                match process(tx.clone(), msg) {
                     true => continue,
                     false => break,
                 }
+            }
+            Some(resp) = rx.recv() => {
+                debug!("resp: {:?}", resp);
             }
             // _ = interval.tick() => {
             //     ws_sender.send(Message::Text("tick".to_owned())).await?;
