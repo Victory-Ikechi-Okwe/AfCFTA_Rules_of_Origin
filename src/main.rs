@@ -20,12 +20,18 @@ async fn accept_connection(peer: SocketAddr, stream: TcpStream) {
 
 
 #[derive(Debug)]
-enum Action {
+enum ActionT {
     Submit,
     Store,
     Publish,
 }
 
+#[derive(Debug)]
+struct Action {
+    args: Vec<serde_json::Value>,
+    doc: serde_json::Map<String, serde_json::Value>,
+    act: ActionT,
+}
 
 #[derive(Debug)]
 enum Error {
@@ -40,25 +46,25 @@ enum Error {
 fn do_submit(
     args: &Vec<serde_json::Value>,
     d: &serde_json::Map<String, serde_json::Value>
-) -> Action {
+) -> bool {
     debug!("submit: {:?}, {:?}", args, d);
-    Action::Submit
+    true
 }
 
 fn do_store(
     args: &Vec<serde_json::Value>,
     d: &serde_json::Map<String, serde_json::Value>
-) -> Action {
+) -> bool {
     debug!("store: {:?}, {:?}", args, d);
-    Action::Store
+    true
 }
 
 fn do_publish(
     args: &Vec<serde_json::Value>,
     d: &serde_json::Map<String, serde_json::Value>
-) -> Action {
+) -> bool {
     debug!("publish: {:?}, {:?}", args, d);
-    Action::Publish
+    true
 }
 
 fn process_cmd(
@@ -69,15 +75,9 @@ fn process_cmd(
     match (cmd_v, args_v, doc_v) {
         (serde_json::Value::String(cmd), serde_json::Value::Array(args), serde_json::Value::Object(d)) => {
             match cmd.as_str() {
-                "SUBMIT" => {
-                    Ok(do_submit(args, d))
-                },
-                "STORE" => {
-                    Ok(do_store(args, d))
-                },
-                "PUBLISH" => {
-                    Ok(do_publish(args, d))
-                },
+                "SUBMIT" => Ok(Action { args: args.clone(), doc: d.clone(), act: ActionT::Submit }),
+                "STORE" => Ok(Action { args: args.clone(), doc: d.clone(), act: ActionT::Store }),
+                "PUBLISH" => Ok(Action { args: args.clone(), doc: d.clone(), act: ActionT::Publish }),
                 _ => {
                     Err(Error::UnknownAction)
                 }
@@ -116,17 +116,22 @@ fn process_text(t: String) -> Result<Action, Error> {
 fn process(tx: tokio::sync::mpsc::Sender<Result<Action, Error>>, msg: Option<Result<Message, tungstenite::Error>>) -> bool {
     match msg {
         Some(Ok(Message::Text(t))) => {
-            // TODO: only the action (do_x) should be async, all errors or acceptance need to be
-            // immediately written to the caller, rather than true/false being returned
-            //
-            // probably, ~process_text~ needs to return something that can be invoked if there
-            // is a valid action
-            tokio::spawn(async move {
-                let proc_res = process_text(t);
-                if let Err(err) = tx.send(proc_res).await {
-                    debug!("failed send: {:?}", err);
+            let proc_res = process_text(t);
+            debug!("proc_res: {:?}", proc_res);
+            match proc_res {
+                Ok(Action { args, doc, act }) => {
+                    tokio::spawn(async move {
+                        match act {
+                            ActionT::Submit => { do_submit(&args, &doc) },
+                            ActionT::Store => { do_store(&args, &doc) },
+                            ActionT::Publish => { do_publish(&args, &doc) },
+                        }
+                    });
+                },
+                Err(err) => {
+                    debug!("action err: {:?}", err);
                 }
-            });
+            }
             true
         },
         Some(Ok(Message::Binary(_))) => {
