@@ -22,6 +22,8 @@ async fn accept_connection(peer: SocketAddr, stream: TcpStream) {
 #[derive(Debug)]
 enum Action {
     Submit,
+    Store,
+    Publish,
 }
 
 
@@ -43,6 +45,22 @@ fn do_submit(
     Action::Submit
 }
 
+fn do_store(
+    args: &Vec<serde_json::Value>,
+    d: &serde_json::Map<String, serde_json::Value>
+) -> Action {
+    debug!("store: {:?}, {:?}", args, d);
+    Action::Store
+}
+
+fn do_publish(
+    args: &Vec<serde_json::Value>,
+    d: &serde_json::Map<String, serde_json::Value>
+) -> Action {
+    debug!("publish: {:?}, {:?}", args, d);
+    Action::Publish
+}
+
 fn process_cmd(
     cmd_v: &serde_json::Value,
     args_v: &serde_json::Value,
@@ -53,6 +71,12 @@ fn process_cmd(
             match cmd.as_str() {
                 "SUBMIT" => {
                     Ok(do_submit(args, d))
+                },
+                "STORE" => {
+                    Ok(do_store(args, d))
+                },
+                "PUBLISH" => {
+                    Ok(do_publish(args, d))
                 },
                 _ => {
                     Err(Error::UnknownAction)
@@ -92,6 +116,8 @@ fn process_text(t: String) -> Result<Action, Error> {
 fn process(tx: tokio::sync::mpsc::Sender<Result<Action, Error>>, msg: Option<Result<Message, tungstenite::Error>>) -> bool {
     match msg {
         Some(Ok(Message::Text(t))) => {
+            // TODO: only the action (do_x) should be async, all errors or acceptance need to be
+            // immediately written to the caller, rather than true/false being returned
             tokio::spawn(async move {
                 let proc_res = process_text(t);
                 if let Err(err) = tx.send(proc_res).await {
