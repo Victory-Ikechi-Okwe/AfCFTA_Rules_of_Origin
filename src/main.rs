@@ -118,6 +118,9 @@ fn process(tx: tokio::sync::mpsc::Sender<Result<Action, Error>>, msg: Option<Res
         Some(Ok(Message::Text(t))) => {
             // TODO: only the action (do_x) should be async, all errors or acceptance need to be
             // immediately written to the caller, rather than true/false being returned
+            //
+            // probably, ~process_text~ needs to return something that can be invoked if there
+            // is a valid action
             tokio::spawn(async move {
                 let proc_res = process_text(t);
                 if let Err(err) = tx.send(proc_res).await {
