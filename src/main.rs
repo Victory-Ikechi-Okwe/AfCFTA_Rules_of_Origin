@@ -21,9 +21,10 @@ async fn accept_connection(peer: SocketAddr, stream: TcpStream) {
 
 #[derive(Debug)]
 enum ActionT {
-    Submit,
-    Store,
+    Get,
     Publish,
+    Store,
+    Submit,
 }
 
 #[derive(Debug)]
@@ -43,14 +44,26 @@ enum Error {
     },
 }
 
-fn do_submit(
+fn do_get(
     args: &Vec<serde_json::Value>,
     d: &serde_json::Map<String, serde_json::Value>
 ) -> bool {
-    debug!("submit: {:?}, {:?}", args, d);
+    debug!("get: {:?}, {:?}", args, d);
     true
 }
 
+// [id, (rev)]
+// publish doc[id], optional (rev) to publish
+fn do_publish(
+    args: &Vec<serde_json::Value>,
+    d: &serde_json::Map<String, serde_json::Value>
+) -> bool {
+    debug!("publish: {:?}, {:?}", args, d);
+    true
+}
+
+// [(id)], { to_store } -> [id, rev]
+// store document, id? new rev : new doc
 fn do_store(
     args: &Vec<serde_json::Value>,
     d: &serde_json::Map<String, serde_json::Value>
@@ -59,11 +72,11 @@ fn do_store(
     true
 }
 
-fn do_publish(
+fn do_submit(
     args: &Vec<serde_json::Value>,
     d: &serde_json::Map<String, serde_json::Value>
 ) -> bool {
-    debug!("publish: {:?}, {:?}", args, d);
+    debug!("submit: {:?}, {:?}", args, d);
     true
 }
 
@@ -75,9 +88,10 @@ fn process_cmd(
     match (cmd_v, args_v, doc_v) {
         (serde_json::Value::String(cmd), serde_json::Value::Array(args), serde_json::Value::Object(d)) => {
             match cmd.as_str() {
-                "SUBMIT" => Ok(Action { args: args.clone(), doc: d.clone(), act: ActionT::Submit }),
-                "STORE" => Ok(Action { args: args.clone(), doc: d.clone(), act: ActionT::Store }),
+                "GET"     => Ok(Action { args: args.clone(), doc: d.clone(), act: ActionT::Get }),
                 "PUBLISH" => Ok(Action { args: args.clone(), doc: d.clone(), act: ActionT::Publish }),
+                "STORE"   => Ok(Action { args: args.clone(), doc: d.clone(), act: ActionT::Store }),
+                "SUBMIT"  => Ok(Action { args: args.clone(), doc: d.clone(), act: ActionT::Submit }),
                 _ => {
                     Err(Error::UnknownAction)
                 }
@@ -122,9 +136,10 @@ fn process(tx: tokio::sync::mpsc::Sender<Result<Action, Error>>, msg: Option<Res
                 Ok(Action { args, doc, act }) => {
                     tokio::spawn(async move {
                         match act {
-                            ActionT::Submit => { do_submit(&args, &doc) },
-                            ActionT::Store => { do_store(&args, &doc) },
+                            ActionT::Get     => { do_get(&args, &doc) },
                             ActionT::Publish => { do_publish(&args, &doc) },
+                            ActionT::Store   => { do_store(&args, &doc) },
+                            ActionT::Submit  => { do_submit(&args, &doc) },
                         }
                     });
                 },
