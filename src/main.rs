@@ -9,6 +9,9 @@ use tokio_tungstenite::tungstenite::Error as TTError;
 use tokio_tungstenite::tungstenite::Result as TTResult;
 use tungstenite::error::CapacityError::MessageTooLong;
 
+use std::path::PathBuf;
+use glob::glob;
+
 async fn accept_connection(peer: SocketAddr, stream: TcpStream) {
     if let Err(e) = handle_connection(peer, stream).await {
         match e {
@@ -62,6 +65,36 @@ fn do_publish(
     true
 }
 
+fn next_stored_rule(id: String) -> PathBuf {
+    let path: PathBuf = [".", "data", "rules", &id].iter().collect();
+    let vers = path.join("*.json");
+
+    match std::fs::create_dir_all(&path) {
+        Err(e) => debug!("failed to create store dir (dir={:?}, e={:?}", path, e),
+        _ => { }
+    };
+
+    debug!("glob: {:?}", vers);
+    let latest = match glob(vers.to_str().unwrap()) {
+        Ok(it) => it.filter_map(|p| p.ok()).max(),
+        _ => None
+    };
+
+    debug!("latest: {:?}", latest);
+    match latest {
+        Some(latest_path) => {
+            match latest_path.as_path().file_stem() {
+                Some(st) => {
+                    let rev: i32 = st.to_str().unwrap().parse().unwrap();
+                    path.join(format!("{:?}.json", rev + 1))
+                },
+                None => path.join("1.json")
+            }
+        },
+        None => path.join("1.json")
+    }
+}
+
 // [(id)], { to_store } -> [id, rev]
 // store document, id? new rev : new doc
 fn do_store(
@@ -69,6 +102,41 @@ fn do_store(
     d: &serde_json::Map<String, serde_json::Value>
 ) -> bool {
     debug!("store: {:?}, {:?}", args, d);
+
+    let id_opt = match args.as_slice() {
+        [serde_json::Value::String(id)] => {
+            Some(id.to_string())
+        },
+        [] => {
+            Some(uuid::Uuid::new_v4().hyphenated().to_string())
+        },
+        _ => None
+    };
+
+    match id_opt {
+        Some(id) => {
+            let ofn = next_stored_rule(id);
+
+            debug!("writing to {:?}", ofn);
+            match std::fs::File::create(ofn) {
+                Ok(f) => {
+                    match serde_json::to_writer(f, d) {
+                        Ok(_) => { debug!("store: wrote rule"); }
+                        _ => { return false; }
+                    }
+                },
+                _ => {
+                    debug!("failed to create file");
+                    return false;
+                }
+            }
+        },
+        None => {
+            debug!("store: no id");
+            return false;
+        }
+    }
+
     true
 }
 
