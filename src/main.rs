@@ -65,22 +65,16 @@ fn do_publish(
     true
 }
 
-fn next_stored_rule(id: String) -> PathBuf {
-    let path: PathBuf = [".", "data", "rules", &id].iter().collect();
+fn next_stored_rule(path: &PathBuf) -> PathBuf {
     let vers = path.join("*.json");
 
-    match std::fs::create_dir_all(&path) {
-        Err(e) => debug!("failed to create store dir (dir={:?}, e={:?}", path, e),
-        _ => { }
-    };
-
-    debug!("glob: {:?}", vers);
+    debug!("searching for earlier rules: vers={:?}", vers);
     let latest = match glob(vers.to_str().unwrap()) {
         Ok(it) => it.filter_map(|p| p.ok()).max(),
         _ => None
     };
 
-    debug!("latest: {:?}", latest);
+    debug!("matched newest or not: latest={:?}", latest);
     match latest {
         Some(latest_path) => {
             match latest_path.as_path().file_stem() {
@@ -95,6 +89,39 @@ fn next_stored_rule(id: String) -> PathBuf {
     }
 }
 
+fn assure_dir_for_rule(id: String) -> PathBuf {
+    let path: PathBuf = [".", "data", "rules", &id].iter().collect();
+
+    match std::fs::create_dir_all(&path) {
+        Err(e) => debug!("failed to create store dir (dir={:?}, e={:?}", path, e),
+        _ => { }
+    };
+
+    path
+}
+
+fn store_rule(ofn: PathBuf, d: &serde_json::Map<String, serde_json::Value>) -> bool {
+    debug!("writing rule (ofn={:?})", ofn);
+    match std::fs::File::create(&ofn) {
+        Ok(f) => {
+            match serde_json::to_writer(f, &d) {
+                Ok(_) => {
+                    debug!("wrote rule (ofn={:?}", ofn);
+                    true
+                },
+                Err(e) => {
+                    debug!("failed to write rule (ofn={:?}; e={:?})", ofn, e);
+                    false
+                }
+            }
+        },
+        Err(e) => {
+            debug!("failed to create file (ofn={:?}; e={:?}", ofn, e);
+            false
+        }
+    }
+}
+
 // [(id)], { to_store } -> [id, rev]
 // store document, id? new rev : new doc
 fn do_store(
@@ -104,7 +131,7 @@ fn do_store(
     debug!("store: {:?}, {:?}", args, d);
 
     let id_opt = match args.as_slice() {
-        [serde_json::Value::String(id)] => {
+        [serde_json::Value::String(id), ..] => {
             Some(id.to_string())
         },
         [] => {
@@ -115,29 +142,19 @@ fn do_store(
 
     match id_opt {
         Some(id) => {
-            let ofn = next_stored_rule(id);
+            let path = assure_dir_for_rule(id);
+            let ofn = next_stored_rule(&path);
 
-            debug!("writing to {:?}", ofn);
-            match std::fs::File::create(ofn) {
-                Ok(f) => {
-                    match serde_json::to_writer(f, d) {
-                        Ok(_) => { debug!("store: wrote rule"); }
-                        _ => { return false; }
-                    }
-                },
-                _ => {
-                    debug!("failed to create file");
-                    return false;
-                }
-            }
+            debug!("storing rule (path={:?}; ofn={:?}", path, ofn);
+            store_rule(ofn, d);
+
+            true
         },
         None => {
             debug!("store: no id");
-            return false;
+            false
         }
     }
-
-    true
 }
 
 fn do_submit(
