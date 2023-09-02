@@ -55,26 +55,6 @@ fn do_get(
     true
 }
 
-// [id, (rev)]
-// publish doc[id], optional (rev) to publish
-fn do_publish(
-    args: &Vec<serde_json::Value>,
-    d: &serde_json::Map<String, serde_json::Value>
-) -> bool {
-    debug!("publish: {:?}, {:?}", args, d);
-
-    match args.as_slice() {
-        [serde_json::Value::String(id), serde_json::Value::Number(rev), ..] => {
-            debug!("id={:?}; rev={:?}", id, rev);
-        },
-        [serde_json::Value::String(id)] => {
-            debug!("id={:?}", id);
-        },
-        _ => { }
-    }
-    true
-}
-
 fn extract_rev(p: &PathBuf) -> i32 {
     match p.as_path().file_stem() {
         None => -9999,
@@ -109,8 +89,12 @@ fn next_stored_rule(path: &PathBuf) -> PathBuf {
     }
 }
 
-fn assure_dir_for_rule(id: String) -> PathBuf {
-    let path: PathBuf = [".", "data", "rules", &id].iter().collect();
+fn rule_path(id: &String) -> PathBuf {
+    [".", "data", "rules", &id].iter().collect()
+}
+
+fn assure_dir_for_rule(id: &String) -> PathBuf {
+    let path: PathBuf = rule_path(id);
 
     match std::fs::create_dir_all(&path) {
         Err(e) => debug!("failed to create store dir (dir={:?}, e={:?}", path, e),
@@ -142,6 +126,56 @@ fn store_rule(ofn: PathBuf, d: &serde_json::Map<String, serde_json::Value>) -> b
     }
 }
 
+fn find_rule_by_rev(id: &String, rev: i64) -> Option<PathBuf> {
+    let path = rule_path(id).join(format!("{:?}.json", rev));
+    if path.exists() { Some(path) } else { None }
+}
+
+fn find_rule_by_args(args: &Vec<serde_json::Value>) -> Option<PathBuf> {
+    match args.as_slice() {
+        [serde_json::Value::String(id), serde_json::Value::Number(rev), ..] => {
+            debug!("id={:?}; rev={:?}", id, rev);
+            find_rule_by_rev(id, rev.as_i64().unwrap())
+        },
+        [serde_json::Value::String(id)] => {
+            find_latest_rule(&rule_path(&id.to_string()))
+        },
+        _ => None
+    }
+}
+
+// [id, (rev)]
+// publish doc[id], optional (rev) to publish
+fn do_publish(
+    args: &Vec<serde_json::Value>,
+    d: &serde_json::Map<String, serde_json::Value>
+) -> bool {
+    debug!("publish: {:?}, {:?}", args, d);
+
+    match find_rule_by_args(args) {
+        Some(path) => {
+            debug!("located rule (path={:?})", path);
+            let target = path.parent().unwrap().join("published");
+            let _ = std::fs::remove_file(&target);
+            match std::os::unix::fs::symlink(&path, &target) {
+                Ok(_) => {
+                    debug!("linked (path={:?}, target={:?}", path, target);
+                    true
+                },
+                _ => {
+                    debug!("failed link (path={:?}, target={:?}", path, target);
+                    true
+                }
+            }
+        },
+        None => {
+            debug!("rule not found");
+
+            false
+        }
+    }
+}
+
 // [(id)], { to_store } -> [id, rev]
 // store document, id? new rev : new doc
 fn do_store(
@@ -162,7 +196,7 @@ fn do_store(
 
     match id_opt {
         Some(id) => {
-            let path = assure_dir_for_rule(id);
+            let path = assure_dir_for_rule(&id);
             let ofn = next_stored_rule(&path);
 
             debug!("storing rule (path={:?}; ofn={:?}", path, ofn);
