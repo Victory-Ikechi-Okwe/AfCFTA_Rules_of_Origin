@@ -149,24 +149,17 @@ fn do_submit(
 }
 
 fn process_cmd(
-    cmd_v: &serde_json::Value,
-    args_v: &serde_json::Value,
-    doc_v: &serde_json::Value
+    cmd: &String,
+    args: &Vec<serde_json::Value>,
+    doc: &serde_json::Map<String, serde_json::Value>
 ) -> Result<Action, Error> {
-    match (cmd_v, args_v, doc_v) {
-        (serde_json::Value::String(cmd), serde_json::Value::Array(args), serde_json::Value::Object(d)) => {
-            match cmd.as_str() {
-                "GET"     => Ok(Action { args: args.clone(), doc: d.clone(), act: ActionT::Get }),
-                "PUBLISH" => Ok(Action { args: args.clone(), doc: d.clone(), act: ActionT::Publish }),
-                "STORE"   => Ok(Action { args: args.clone(), doc: d.clone(), act: ActionT::Store }),
-                "SUBMIT"  => Ok(Action { args: args.clone(), doc: d.clone(), act: ActionT::Submit }),
-                _ => {
-                    Err(Error::UnknownAction)
-                }
-            }
-        },
+    match cmd.as_str() {
+        "GET"     => Ok(Action { args: args.clone(), doc: doc.clone(), act: ActionT::Get }),
+        "PUBLISH" => Ok(Action { args: args.clone(), doc: doc.clone(), act: ActionT::Publish }),
+        "STORE"   => Ok(Action { args: args.clone(), doc: doc.clone(), act: ActionT::Store }),
+        "SUBMIT"  => Ok(Action { args: args.clone(), doc: doc.clone(), act: ActionT::Submit }),
         _ => {
-            Err(Error::InvalidAction)
+            Err(Error::UnknownAction)
         }
     }
 }
@@ -176,9 +169,9 @@ fn process_text(t: String) -> Result<Action, Error> {
     let v: serde_json::Result<serde_json::Value> = serde_json::from_str(t.as_str());
     match v {
         Ok(serde_json::Value::Array(a)) => {
-            match a.len() {
-                3 => {
-                    process_cmd(&a[0], &a[1], &a[2])
+            match a.as_slice() {
+                [serde_json::Value::String(cmd), serde_json::Value::Array(args), serde_json::Value::Object(d)] => {
+                    process_cmd(cmd, args, d)
                 },
                 _ => {
                     Err(Error::Protocol)
