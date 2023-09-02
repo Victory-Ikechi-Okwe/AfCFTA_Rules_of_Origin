@@ -47,14 +47,6 @@ enum Error {
     },
 }
 
-fn do_get(
-    args: &Vec<serde_json::Value>,
-    d: &serde_json::Map<String, serde_json::Value>
-) -> bool {
-    debug!("get: {:?}, {:?}", args, d);
-    true
-}
-
 fn extract_rev(p: &PathBuf) -> i32 {
     match p.as_path().file_stem() {
         None => -9999,
@@ -207,6 +199,23 @@ fn do_store(
         None => {
             debug!("store: no id");
             false
+        }
+    }
+}
+
+fn do_get(
+    args: &Vec<serde_json::Value>,
+    d: &serde_json::Map<String, serde_json::Value>
+) -> bool {
+    debug!("get: {:?}, {:?}", args, d);
+    match find_rule_by_args(args) {
+        Some(path) => {
+            debug!("GET: found rule (path={:?}; args={:?})", path, args);
+            true
+        },
+        None => {
+            debug!("GET: rule not found (args={:?})", args);
+            true
         }
     }
 }
