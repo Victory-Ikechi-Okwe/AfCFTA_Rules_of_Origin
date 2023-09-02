@@ -62,24 +62,44 @@ fn do_publish(
     d: &serde_json::Map<String, serde_json::Value>
 ) -> bool {
     debug!("publish: {:?}, {:?}", args, d);
+
+    match args.as_slice() {
+        [serde_json::Value::String(id), serde_json::Value::Number(rev), ..] => {
+            debug!("id={:?}; rev={:?}", id, rev);
+        },
+        [serde_json::Value::String(id)] => {
+            debug!("id={:?}", id);
+        },
+        _ => { }
+    }
     true
 }
 
-fn next_stored_rule(path: &PathBuf) -> PathBuf {
+fn extract_rev(p: &PathBuf) -> i32 {
+    match p.as_path().file_stem() {
+        None => -9999,
+        Some(st) => { st.to_str().unwrap().parse().unwrap() }
+    }
+}
+
+fn find_latest_rule(path: &PathBuf) -> Option<PathBuf> {
     let vers = path.join("*.json");
 
-    debug!("searching for earlier rules: vers={:?}", vers);
-    let latest = match glob(vers.to_str().unwrap()) {
-        Ok(it) => it.filter_map(|p| p.ok()).max(),
+    debug!("searching for rules: vers={:?}", vers);
+    match glob(vers.to_str().unwrap()) {
+        Ok(it) => it.filter_map(|p| p.ok()).max_by_key(extract_rev),
         _ => None
-    };
+    }
+}
 
-    debug!("matched newest or not: latest={:?}", latest);
-    match latest {
+fn next_stored_rule(path: &PathBuf) -> PathBuf {
+    match find_latest_rule(path) {
         Some(latest_path) => {
+            debug!("found latest (latest_path={:?})", latest_path);
             match latest_path.as_path().file_stem() {
                 Some(st) => {
                     let rev: i32 = st.to_str().unwrap().parse().unwrap();
+                    debug!("next rev (rev={:?})", rev);
                     path.join(format!("{:?}.json", rev + 1))
                 },
                 None => path.join("1.json")
