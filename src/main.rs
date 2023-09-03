@@ -26,7 +26,7 @@ fn next_message() -> u64 {
 }
 
 async fn accept_connection(peer: SocketAddr, stream: TcpStream, peers: Peers) {
-    if let Err(e) = handle_connection(peer, stream, peers).await {
+    if let Err(e) = handle_connection(peer, stream, &peers).await {
         match e {
             TTError::ConnectionClosed | TTError::Protocol(_) | TTError::Utf8 => (),
             err => error!("Error processing connection: {}", err),
@@ -430,7 +430,15 @@ fn process(tx: tokio::sync::mpsc::Sender<Reaction>, msg: Option<Result<Message, 
     }
 }
 
-async fn handle_connection(peer: SocketAddr, stream: TcpStream, peers: Peers) -> TTResult<()> {
+fn update_order(peers: &Peers, peer: SocketAddr) -> u64 {
+    let m = peers.lock().unwrap();
+    match m.get(&peer) {
+        Some(a) => a.fetch_add(1, Ordering::SeqCst),
+        None => 0,
+    }
+}
+
+async fn handle_connection(peer: SocketAddr, stream: TcpStream, peers: &Peers) -> TTResult<()> {
     let ws_stream = accept_async(stream).await.expect("Failed to accept");
     info!("New WebSocket connection: {}", peer);
     let (mut ws_sender, mut ws_receiver) = ws_stream.split();
@@ -441,6 +449,8 @@ async fn handle_connection(peer: SocketAddr, stream: TcpStream, peers: Peers) ->
     loop {
         tokio::select! {
             msg = ws_receiver.next() => {
+                let order = update_order(peers, peer);
+                debug!("order: {:?}", order);
                 match process(tx.clone(), msg) {
                     true => continue,
                     false => break,
