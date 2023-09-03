@@ -63,26 +63,22 @@ enum ReactionStatus {
 #[derive(Debug)]
 struct Reaction {
     status: ReactionStatus,
-    msg: String,
-    doc: Option<serde_json::Value>,
+    doc: serde_json::Value,
     act: ActionT,
     order: u64,
 }
 
-fn make_failed(order: u64, act: ActionT, msg: &str) -> Reaction {
-    Reaction { status: ReactionStatus::Failed, msg: msg.to_string(), doc: None, act: act, order: order }
+fn make_failed(order: u64, act: ActionT, m: String) -> Reaction {
+    let doc = serde_json::json!({ "error" : m });
+    Reaction { status: ReactionStatus::Failed, doc: doc, act: act, order: order }
 }
 
-fn make_failed_with_string(order: u64, act: ActionT, msg: String) -> Reaction {
-    Reaction { status: ReactionStatus::Failed, msg: msg.clone(), doc: None, act: act, order: order }
+fn make_failed_with_str(order: u64, act: ActionT, m: &str) -> Reaction {
+    make_failed(order, act, m.to_string())
 }
 
-fn make_ok(order: u64, act: ActionT, msg: &str) -> Reaction {
-    Reaction { status: ReactionStatus::Ok, msg: msg.to_string(), doc: None, act: act, order: order }
-}
-
-fn make_ok_with_json(order: u64, act: ActionT, doc: &serde_json::Value) -> Reaction {
-    Reaction { status: ReactionStatus::Ok, msg: String::new(), order: order, act: act, doc: Some(doc.clone()) }
+fn make_ok(order: u64, act: ActionT, doc: &serde_json::Value) -> Reaction {
+    Reaction { status: ReactionStatus::Ok, order: order, act: act, doc: doc.clone() }
 }
 
 fn make_action_string(act: &ActionT) -> String {
@@ -103,22 +99,14 @@ fn make_status_string(st: &ReactionStatus) -> String {
 }
 
 fn make_reaction_message(r: &Reaction) -> Message {
-    let v = match &r.doc {
-        Some(doc) => serde_json::json!([
-            r.order,
-            make_status_string(&r.status),
-            make_action_string(&r.act),
-            r.doc]),
-        None => serde_json::json!([
-            r.order,
-            make_status_string(&r.status),
-            make_action_string(&r.act),
-            r.msg]),
-    };
+    let doc = serde_json::json!([
+        r.order,
+        make_status_string(&r.status),
+        make_action_string(&r.act),
+        r.doc]);
+    debug!("json: {:?}", doc);
 
-    debug!("json: {:?}", v);
-
-    Message::Text(v.to_string())
+    Message::Text(doc.to_string())
 }
 
 fn make_accepted_message(order: u64) -> Message {
@@ -237,17 +225,18 @@ fn do_publish(
             match std::os::unix::fs::symlink(&path, &target) {
                 Ok(_) => {
                     debug!("linked (path={:?}, target={:?}", path, target);
-                    make_ok(order, ActionT::Publish, "")
+                    let doc = serde_json::json!({ });
+                    make_ok(order, ActionT::Publish, &doc)
                 },
                 _ => {
                     debug!("failed link (path={:?}, target={:?}", path, target);
-                    make_failed(order, ActionT::Publish, "link failed")
+                    make_failed_with_str(order, ActionT::Publish, "failed change version")
                 }
             }
         },
         None => {
             debug!("rule not found");
-            make_failed(order, ActionT::Publish, "rule not found")
+            make_failed_with_str(order, ActionT::Publish, "rule not found")
         }
     }
 }
@@ -279,11 +268,12 @@ fn do_store(
             debug!("storing rule (path={:?}; ofn={:?}", path, ofn);
             store_rule(ofn, d);
 
-            make_ok(order, ActionT::Store, "stored")
+            let doc = serde_json::json!({ "id" : id, "revision" : "" });
+            make_ok(order, ActionT::Store, &doc)
         },
         None => {
             debug!("store: no id");
-            make_failed(order, ActionT::Store, "unknown id")
+            make_failed_with_str(order, ActionT::Store, "unknown id")
         }
     }
 }
@@ -300,17 +290,17 @@ fn do_get(
             let f = match std::fs::File::open(&path) {
                 Ok(f) => f,
                 _ => {
-                    return make_failed_with_string(
+                    return make_failed(
                         order, ActionT::Get, format!("failed to open rule file (path={:?})", path)
                     );
                 }
             };
 
-            make_ok_with_json(order, ActionT::Get, &serde_json::from_reader(f).unwrap())
+            make_ok(order, ActionT::Get, &serde_json::from_reader(f).unwrap())
         },
         None => {
             debug!("GET: rule not found (args={:?})", args);
-            make_failed(order, ActionT::Get, "rule not found")
+            make_failed_with_str(order, ActionT::Get, "rule not found")
         }
     }
 }
@@ -327,7 +317,9 @@ fn do_submit(
     order: u64
 ) -> Reaction {
     debug!("submit: {:?}, {:?}", args, d);
-    make_ok(order, ActionT::Submit, "")
+
+    let doc = serde_json::json!({ });
+    make_ok(order, ActionT::Submit, &doc)
 }
 
 fn process_cmd(
@@ -459,10 +451,10 @@ async fn handle_connection(peer: SocketAddr, stream: TcpStream, peers: &Peers) -
                 let order = update_order(peers, peer);
                 debug!("order: {:?}", order);
                 if process(tx.clone(), order, msg) {
-                    ws_sender.send(make_accepted_message(order)).await;
+                    let _ = ws_sender.send(make_accepted_message(order)).await;
                     continue;
                 } else {
-                    ws_sender.send(make_rejected_message(order)).await;
+                    let _ = ws_sender.send(make_rejected_message(order)).await;
                     break;
                 }
             }
