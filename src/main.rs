@@ -121,6 +121,16 @@ fn make_reaction_message(r: &Reaction) -> Message {
     Message::Text(v.to_string())
 }
 
+fn make_accepted_message(order: u64) -> Message {
+    let v = serde_json::json!([order, "accepted"]);
+    Message::Text(v.to_string())
+}
+
+fn make_rejected_message(order: u64) -> Message {
+    let v = serde_json::json!([order, "rejected"]);
+    Message::Text(v.to_string())
+}
+
 fn extract_rev(p: &PathBuf) -> i32 {
     match p.as_path().file_stem() {
         None => -9999,
@@ -378,7 +388,6 @@ fn process(
                         // be a wrapper - esp considering the unimplemented error below?
                         // order would be in that wrapper
                         // Wrapper { reaction: reaction, order: order }??
-                        let _a = tx.send(make_ok(order, act, "accepted")).await;
                         let reaction = match act {
                             ActionT::Get     => { do_get(&args, &doc, order) },
                             ActionT::Publish => { do_publish(&args, &doc, order) },
@@ -449,9 +458,12 @@ async fn handle_connection(peer: SocketAddr, stream: TcpStream, peers: &Peers) -
             msg = ws_receiver.next() => {
                 let order = update_order(peers, peer);
                 debug!("order: {:?}", order);
-                match process(tx.clone(), order, msg) {
-                    true => continue,
-                    false => break,
+                if process(tx.clone(), order, msg) {
+                    ws_sender.send(make_accepted_message(order)).await;
+                    continue;
+                } else {
+                    ws_sender.send(make_rejected_message(order)).await;
+                    break;
                 }
             }
             Some(resp) = rx.recv() => {
