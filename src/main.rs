@@ -12,6 +12,15 @@ use tungstenite::error::CapacityError::MessageTooLong;
 use std::path::PathBuf;
 use glob::glob;
 
+use std::sync::atomic::{AtomicU64, Ordering};
+
+// TODO: needs to be per-client
+static MESSAGE_ORDER: AtomicU64 = AtomicU64::new(0);
+
+fn next_message() -> u64 {
+    MESSAGE_ORDER.fetch_add(1, Ordering::SeqCst)
+}
+
 async fn accept_connection(peer: SocketAddr, stream: TcpStream) {
     if let Err(e) = handle_connection(peer, stream).await {
         match e {
@@ -22,7 +31,7 @@ async fn accept_connection(peer: SocketAddr, stream: TcpStream) {
 }
 
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 enum ActionT {
     Get,
     Publish,
@@ -35,6 +44,7 @@ struct Action {
     args: Vec<serde_json::Value>,
     doc: serde_json::Map<String, serde_json::Value>,
     act: ActionT,
+    order: u64,
 }
 
 #[derive(Debug)]
@@ -45,6 +55,38 @@ enum Error {
     Json {
         err: serde_json::Error
     },
+}
+
+#[derive(Debug, Copy, Clone)]
+enum ReactionStatus {
+    Ok,
+    Failed,
+    Unknown,
+}
+
+#[derive(Debug)]
+struct Reaction {
+    status: ReactionStatus,
+    msg: String,
+    doc: Option<serde_json::Value>,
+    act: ActionT,
+    order: u64,
+}
+
+fn make_failed(order: u64, act: ActionT, msg: &str) -> Reaction {
+    Reaction { status: ReactionStatus::Failed, msg: msg.to_string(), doc: None, act: act, order: order }
+}
+
+fn make_failed_with_string(order: u64, act: ActionT, msg: String) -> Reaction {
+    Reaction { status: ReactionStatus::Failed, msg: msg.clone(), doc: None, act: act, order: order }
+}
+
+fn make_ok(order: u64, act: ActionT, msg: &str) -> Reaction {
+    Reaction { status: ReactionStatus::Ok, msg: msg.to_string(), doc: None, act: act, order: order }
+}
+
+fn make_ok_with_json(order: u64, act: ActionT, doc: &serde_json::Value) -> Reaction {
+    Reaction { status: ReactionStatus::Ok, msg: String::new(), order: order, act: act, doc: Some(doc.clone()) }
 }
 
 fn extract_rev(p: &PathBuf) -> i32 {
@@ -140,8 +182,9 @@ fn find_rule_by_args(args: &Vec<serde_json::Value>) -> Option<PathBuf> {
 // publish doc[id], optional (rev) to publish
 fn do_publish(
     args: &Vec<serde_json::Value>,
-    d: &serde_json::Map<String, serde_json::Value>
-) -> bool {
+    d: &serde_json::Map<String, serde_json::Value>,
+    order: u64
+) -> Reaction {
     debug!("publish: {:?}, {:?}", args, d);
 
     match find_rule_by_args(args) {
@@ -152,18 +195,17 @@ fn do_publish(
             match std::os::unix::fs::symlink(&path, &target) {
                 Ok(_) => {
                     debug!("linked (path={:?}, target={:?}", path, target);
-                    true
+                    make_ok(order, ActionT::Publish, "")
                 },
                 _ => {
                     debug!("failed link (path={:?}, target={:?}", path, target);
-                    true
+                    make_failed(order, ActionT::Publish, "link failed")
                 }
             }
         },
         None => {
             debug!("rule not found");
-
-            false
+            make_failed(order, ActionT::Publish, "rule not found")
         }
     }
 }
@@ -172,8 +214,9 @@ fn do_publish(
 // store document, id? new rev : new doc
 fn do_store(
     args: &Vec<serde_json::Value>,
-    d: &serde_json::Map<String, serde_json::Value>
-) -> bool {
+    d: &serde_json::Map<String, serde_json::Value>,
+    order: u64
+) -> Reaction {
     debug!("store: {:?}, {:?}", args, d);
 
     let id_opt = match args.as_slice() {
@@ -194,38 +237,55 @@ fn do_store(
             debug!("storing rule (path={:?}; ofn={:?}", path, ofn);
             store_rule(ofn, d);
 
-            true
+            make_ok(order, ActionT::Store, "stored")
         },
         None => {
             debug!("store: no id");
-            false
+            make_failed(order, ActionT::Store, "unknown id")
         }
     }
 }
 
 fn do_get(
     args: &Vec<serde_json::Value>,
-    d: &serde_json::Map<String, serde_json::Value>
-) -> bool {
+    d: &serde_json::Map<String, serde_json::Value>,
+    order: u64
+) -> Reaction {
     debug!("get: {:?}, {:?}", args, d);
     match find_rule_by_args(args) {
         Some(path) => {
             debug!("GET: found rule (path={:?}; args={:?})", path, args);
-            true
+            let f = match std::fs::File::open(&path) {
+                Ok(f) => f,
+                _ => {
+                    return make_failed_with_string(
+                        order, ActionT::Get, format!("failed to open rule file (path={:?})", path)
+                    );
+                }
+            };
+
+            make_ok_with_json(order, ActionT::Get, &serde_json::from_reader(f).unwrap())
         },
         None => {
             debug!("GET: rule not found (args={:?})", args);
-            true
+            make_failed(order, ActionT::Get, "rule not found")
         }
     }
 }
 
+    // status: ReactionStatus,
+    // msg: String,
+    // doc: serde_json::Map<String, serde_json::Value>,
+    // act: ActionT,
+    // order: u64,
+
 fn do_submit(
     args: &Vec<serde_json::Value>,
-    d: &serde_json::Map<String, serde_json::Value>
-) -> bool {
+    d: &serde_json::Map<String, serde_json::Value>,
+    order: u64
+) -> Reaction {
     debug!("submit: {:?}, {:?}", args, d);
-    true
+    make_ok(order, ActionT::Submit, "")
 }
 
 fn process_cmd(
@@ -234,10 +294,10 @@ fn process_cmd(
     doc: &serde_json::Map<String, serde_json::Value>
 ) -> Result<Action, Error> {
     match cmd.as_str() {
-        "GET"     => Ok(Action { args: args.clone(), doc: doc.clone(), act: ActionT::Get }),
-        "PUBLISH" => Ok(Action { args: args.clone(), doc: doc.clone(), act: ActionT::Publish }),
-        "STORE"   => Ok(Action { args: args.clone(), doc: doc.clone(), act: ActionT::Store }),
-        "SUBMIT"  => Ok(Action { args: args.clone(), doc: doc.clone(), act: ActionT::Submit }),
+        "GET"     => Ok(Action { order: next_message(), args: args.clone(), doc: doc.clone(), act: ActionT::Get }),
+        "PUBLISH" => Ok(Action { order: next_message(), args: args.clone(), doc: doc.clone(), act: ActionT::Publish }),
+        "STORE"   => Ok(Action { order: next_message(), args: args.clone(), doc: doc.clone(), act: ActionT::Store }),
+        "SUBMIT"  => Ok(Action { order: next_message(), args: args.clone(), doc: doc.clone(), act: ActionT::Submit }),
         _ => {
             Err(Error::UnknownAction)
         }
@@ -268,20 +328,23 @@ fn process_text(t: String) -> Result<Action, Error> {
     }
 }
 
-fn process(tx: tokio::sync::mpsc::Sender<Result<Action, Error>>, msg: Option<Result<Message, tungstenite::Error>>) -> bool {
+fn process(tx: tokio::sync::mpsc::Sender<Reaction>, msg: Option<Result<Message, tungstenite::Error>>) -> bool {
     match msg {
         Some(Ok(Message::Text(t))) => {
-            let proc_res = process_text(t);
-            debug!("proc_res: {:?}", proc_res);
-            match proc_res {
-                Ok(Action { args, doc, act }) => {
+            let action = process_text(t);
+            debug!("parsed arction (action={:?})", action);
+            match action {
+                Ok(Action { order, args, doc, act }) => {
                     tokio::spawn(async move {
-                        match act {
-                            ActionT::Get     => { do_get(&args, &doc) },
-                            ActionT::Publish => { do_publish(&args, &doc) },
-                            ActionT::Store   => { do_store(&args, &doc) },
-                            ActionT::Submit  => { do_submit(&args, &doc) },
-                        }
+                        let _a = tx.send(make_ok(order, act, "accepted")).await;
+                        let reaction = match act {
+                            ActionT::Get     => { do_get(&args, &doc, order) },
+                            ActionT::Publish => { do_publish(&args, &doc, order) },
+                            ActionT::Store   => { do_store(&args, &doc, order) },
+                            ActionT::Submit  => { do_submit(&args, &doc, order) },
+                        };
+                        debug!("reaction (reaction={:?})", reaction);
+                        let _b = tx.send(reaction).await;
                     });
                 },
                 Err(err) => {
