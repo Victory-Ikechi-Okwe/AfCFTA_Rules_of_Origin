@@ -13,6 +13,10 @@ use std::path::PathBuf;
 use glob::glob;
 
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::{Arc, Mutex};
+use std::collections::HashMap;
+
+type Peers = Arc<Mutex<HashMap<SocketAddr, AtomicU64>>>;
 
 // TODO: needs to be per-client
 static MESSAGE_ORDER: AtomicU64 = AtomicU64::new(0);
@@ -21,8 +25,8 @@ fn next_message() -> u64 {
     MESSAGE_ORDER.fetch_add(1, Ordering::SeqCst)
 }
 
-async fn accept_connection(peer: SocketAddr, stream: TcpStream) {
-    if let Err(e) = handle_connection(peer, stream).await {
+async fn accept_connection(peer: SocketAddr, stream: TcpStream, peers: Peers) {
+    if let Err(e) = handle_connection(peer, stream, peers).await {
         match e {
             TTError::ConnectionClosed | TTError::Protocol(_) | TTError::Utf8 => (),
             err => error!("Error processing connection: {}", err),
@@ -426,11 +430,13 @@ fn process(tx: tokio::sync::mpsc::Sender<Reaction>, msg: Option<Result<Message, 
     }
 }
 
-async fn handle_connection(peer: SocketAddr, stream: TcpStream) -> TTResult<()> {
+async fn handle_connection(peer: SocketAddr, stream: TcpStream, peers: Peers) -> TTResult<()> {
     let ws_stream = accept_async(stream).await.expect("Failed to accept");
     info!("New WebSocket connection: {}", peer);
     let (mut ws_sender, mut ws_receiver) = ws_stream.split();
     let (tx, mut rx) = mpsc::channel(64);
+
+    peers.lock().unwrap().insert(peer, AtomicU64::new(0));
 
     loop {
         tokio::select! {
@@ -456,12 +462,14 @@ async fn main() {
 
     let addr = "127.0.0.1:9002";
     let listener = TcpListener::bind(&addr).await.expect("Can't listen");
+    let peers = Peers::new(Mutex::new(HashMap::new()));
+
     info!("Listening on: {}", addr);
 
     while let Ok((stream, _)) = listener.accept().await {
         let peer = stream.peer_addr().expect("connected streams should have a peer address");
         info!("Peer address: {}", peer);
 
-        tokio::spawn(accept_connection(peer, stream));
+        tokio::spawn(accept_connection(peer, stream, peers.clone()));
     }
 }
