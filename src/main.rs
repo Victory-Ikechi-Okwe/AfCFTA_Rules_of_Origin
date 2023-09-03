@@ -18,13 +18,6 @@ use std::collections::HashMap;
 
 type Peers = Arc<Mutex<HashMap<SocketAddr, AtomicU64>>>;
 
-// TODO: needs to be per-client
-static MESSAGE_ORDER: AtomicU64 = AtomicU64::new(0);
-
-fn next_message() -> u64 {
-    MESSAGE_ORDER.fetch_add(1, Ordering::SeqCst)
-}
-
 async fn accept_connection(peer: SocketAddr, stream: TcpStream, peers: Peers) {
     if let Err(e) = handle_connection(peer, stream, &peers).await {
         match e {
@@ -48,7 +41,6 @@ struct Action {
     args: Vec<serde_json::Value>,
     doc: serde_json::Map<String, serde_json::Value>,
     act: ActionT,
-    order: u64,
 }
 
 #[derive(Debug)]
@@ -334,10 +326,10 @@ fn process_cmd(
     doc: &serde_json::Map<String, serde_json::Value>
 ) -> Result<Action, Error> {
     match cmd.as_str() {
-        "GET"     => Ok(Action { order: next_message(), args: args.clone(), doc: doc.clone(), act: ActionT::Get }),
-        "PUBLISH" => Ok(Action { order: next_message(), args: args.clone(), doc: doc.clone(), act: ActionT::Publish }),
-        "STORE"   => Ok(Action { order: next_message(), args: args.clone(), doc: doc.clone(), act: ActionT::Store }),
-        "SUBMIT"  => Ok(Action { order: next_message(), args: args.clone(), doc: doc.clone(), act: ActionT::Submit }),
+        "GET"     => Ok(Action { args: args.clone(), doc: doc.clone(), act: ActionT::Get }),
+        "PUBLISH" => Ok(Action { args: args.clone(), doc: doc.clone(), act: ActionT::Publish }),
+        "STORE"   => Ok(Action { args: args.clone(), doc: doc.clone(), act: ActionT::Store }),
+        "SUBMIT"  => Ok(Action { args: args.clone(), doc: doc.clone(), act: ActionT::Submit }),
         _ => {
             Err(Error::UnknownAction)
         }
@@ -368,18 +360,24 @@ fn process_text(t: String) -> Result<Action, Error> {
     }
 }
 
-fn process(tx: tokio::sync::mpsc::Sender<Reaction>, msg: Option<Result<Message, tungstenite::Error>>) -> bool {
+fn process(
+    tx: tokio::sync::mpsc::Sender<Reaction>,
+    order: u64,
+    msg: Option<Result<Message, tungstenite::Error>>
+) -> bool {
     match msg {
         Some(Ok(Message::Text(t))) => {
             let action = process_text(t);
             debug!("parsed arction (action={:?})", action);
             match action {
-                Ok(Action { order, args, doc, act }) => {
+                Ok(Action { args, doc, act }) => {
                     tokio::spawn(async move {
                         // TODO: differential the JSON written - this is just telling the peer
                         // that the message is correct and so they can learn the order -
                         // maybe Reaction isn't the correct thing to transmit? maybe there should
                         // be a wrapper - esp considering the unimplemented error below?
+                        // order would be in that wrapper
+                        // Wrapper { reaction: reaction, order: order }??
                         let _a = tx.send(make_ok(order, act, "accepted")).await;
                         let reaction = match act {
                             ActionT::Get     => { do_get(&args, &doc, order) },
@@ -451,7 +449,7 @@ async fn handle_connection(peer: SocketAddr, stream: TcpStream, peers: &Peers) -
             msg = ws_receiver.next() => {
                 let order = update_order(peers, peer);
                 debug!("order: {:?}", order);
-                match process(tx.clone(), msg) {
+                match process(tx.clone(), order, msg) {
                     true => continue,
                     false => break,
                 }
