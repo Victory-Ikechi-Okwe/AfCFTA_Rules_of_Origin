@@ -1,4 +1,4 @@
-use futures_util::{StreamExt};
+use futures_util::{StreamExt, SinkExt};
 use log::*;
 use std::{net::SocketAddr};
 use tokio::net::{TcpListener, TcpStream};
@@ -87,6 +87,42 @@ fn make_ok(order: u64, act: ActionT, msg: &str) -> Reaction {
 
 fn make_ok_with_json(order: u64, act: ActionT, doc: &serde_json::Value) -> Reaction {
     Reaction { status: ReactionStatus::Ok, msg: String::new(), order: order, act: act, doc: Some(doc.clone()) }
+}
+
+fn make_action_string(act: &ActionT) -> String {
+    match act {
+        ActionT::Get => String::from("get"),
+        ActionT::Publish => String::from("publish"),
+        ActionT::Store => String::from("store"),
+        ActionT::Submit => String::from("submit"),
+    }
+}
+
+fn make_status_string(st: &ReactionStatus) -> String {
+    match st {
+        ReactionStatus::Ok => String::from("ok"),
+        ReactionStatus::Failed => String::from("failed"),
+        ReactionStatus::Unknown => String::from("unknown"),
+    }
+}
+
+fn make_reaction_message(r: &Reaction) -> Message {
+    let v = match &r.doc {
+        Some(doc) => serde_json::json!([
+            r.order,
+            make_status_string(&r.status),
+            make_action_string(&r.act),
+            r.doc]),
+        None => serde_json::json!([
+            r.order,
+            make_status_string(&r.status),
+            make_action_string(&r.act),
+            r.msg]),
+    };
+
+    debug!("json: {:?}", v);
+
+    Message::Text(v.to_string())
 }
 
 fn extract_rev(p: &PathBuf) -> i32 {
@@ -336,6 +372,10 @@ fn process(tx: tokio::sync::mpsc::Sender<Reaction>, msg: Option<Result<Message, 
             match action {
                 Ok(Action { order, args, doc, act }) => {
                     tokio::spawn(async move {
+                        // TODO: differential the JSON written - this is just telling the peer
+                        // that the message is correct and so they can learn the order -
+                        // maybe Reaction isn't the correct thing to transmit? maybe there should
+                        // be a wrapper - esp considering the unimplemented error below?
                         let _a = tx.send(make_ok(order, act, "accepted")).await;
                         let reaction = match act {
                             ActionT::Get     => { do_get(&args, &doc, order) },
@@ -389,7 +429,7 @@ fn process(tx: tokio::sync::mpsc::Sender<Reaction>, msg: Option<Result<Message, 
 async fn handle_connection(peer: SocketAddr, stream: TcpStream) -> TTResult<()> {
     let ws_stream = accept_async(stream).await.expect("Failed to accept");
     info!("New WebSocket connection: {}", peer);
-    let (mut _ws_sender, mut ws_receiver) = ws_stream.split();
+    let (mut ws_sender, mut ws_receiver) = ws_stream.split();
     let (tx, mut rx) = mpsc::channel(64);
 
     loop {
@@ -402,6 +442,7 @@ async fn handle_connection(peer: SocketAddr, stream: TcpStream) -> TTResult<()> 
             }
             Some(resp) = rx.recv() => {
                 debug!("resp: {:?}", resp);
+                ws_sender.send(make_reaction_message(&resp)).await?;
             }
             // _ = interval.tick() => {
             //     ws_sender.send(Message::Text("tick".to_owned())).await?;
