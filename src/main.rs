@@ -152,7 +152,7 @@ fn find_latest_rule(path: &PathBuf) -> Option<Rule> {
     }
 }
 
-fn next_stored_rule(path: &PathBuf) -> PathBuf {
+fn next_stored_rule(path: &PathBuf) -> Rule {
     match find_latest_rule(path) {
         Some(rule) => {
             debug!("found latest rule (rule={:?})", rule);
@@ -160,12 +160,23 @@ fn next_stored_rule(path: &PathBuf) -> PathBuf {
                 Some(st) => {
                     let rev: u64 = st.to_str().unwrap().parse().unwrap();
                     debug!("next rev (rev={:?})", rev);
-                    path.join(format!("{:?}.json", rev + 1))
+                    let path = path.join(format!("{:?}.json", rev + 1));
+                    Rule {
+                        path: path.clone(),
+                        rev: rev,
+                        id: extract_id(&path),
+                    }
                 },
-                None => path.join("1.json")
+                None => {
+                    let path = path.join("1.json");
+                    Rule { path: path.clone(), rev: 1, id: extract_id(&path) }
+                }
             }
         },
-        None => path.join("1.json")
+        None => {
+            let path = path.join("1.json");
+            Rule { path: path.clone(), rev: 1, id: extract_id(&path) }
+        }
     }
 }
 
@@ -184,23 +195,23 @@ fn assure_dir_for_rule(id: &String) -> PathBuf {
     path
 }
 
-fn store_rule(ofn: PathBuf, d: &serde_json::Map<String, serde_json::Value>) -> bool {
-    debug!("writing rule (ofn={:?})", ofn);
-    match std::fs::File::create(&ofn) {
+fn store_rule(rule: &Rule, d: &serde_json::Map<String, serde_json::Value>) -> bool {
+    debug!("writing rule (rule={:?})", rule);
+    match std::fs::File::create(&rule.path) {
         Ok(f) => {
             match serde_json::to_writer(f, &d) {
                 Ok(_) => {
-                    debug!("wrote rule (ofn={:?}", ofn);
+                    debug!("wrote rule (rule={:?}", rule);
                     true
                 },
                 Err(e) => {
-                    debug!("failed to write rule (ofn={:?}; e={:?})", ofn, e);
+                    debug!("failed to write rule (rule={:?}; e={:?})", rule, e);
                     false
                 }
             }
         },
         Err(e) => {
-            debug!("failed to create file (ofn={:?}; e={:?}", ofn, e);
+            debug!("failed to create file (rule={:?}; e={:?}", rule, e);
             false
         }
     }
@@ -241,7 +252,7 @@ fn do_publish(
             match std::os::unix::fs::symlink(&rule.path, &target) {
                 Ok(_) => {
                     debug!("linked (path={:?}, target={:?}", rule.path, target);
-                    let doc = serde_json::json!({ });
+                    let doc = serde_json::json!({ "id" : &rule.id, "revision" : rule.rev });
                     make_ok(order, ActionT::Publish, &doc)
                 },
                 _ => {
@@ -279,12 +290,12 @@ fn do_store(
     match id_opt {
         Some(id) => {
             let path = assure_dir_for_rule(&id);
-            let ofn = next_stored_rule(&path);
+            let rule = next_stored_rule(&path);
 
-            debug!("storing rule (path={:?}; ofn={:?}", path, ofn);
-            store_rule(ofn, d);
+            debug!("storing rule (rule={:?}", rule);
+            store_rule(&rule, d);
 
-            let doc = serde_json::json!({ "id" : id, "revision" : "" });
+            let doc = serde_json::json!({ "id" : rule.id, "revision" : rule.rev });
             make_ok(order, ActionT::Store, &doc)
         },
         None => {
