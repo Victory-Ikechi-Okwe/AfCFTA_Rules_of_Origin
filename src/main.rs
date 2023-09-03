@@ -444,9 +444,6 @@ async fn handle_connection(peer: SocketAddr, stream: TcpStream) -> TTResult<()> 
                 debug!("resp: {:?}", resp);
                 ws_sender.send(make_reaction_message(&resp)).await?;
             }
-            // _ = interval.tick() => {
-            //     ws_sender.send(Message::Text("tick".to_owned())).await?;
-            // }
         }
     }
 
