@@ -332,12 +332,6 @@ fn do_get(
     }
 }
 
-    // status: ReactionStatus,
-    // msg: String,
-    // doc: serde_json::Map<String, serde_json::Value>,
-    // act: ActionT,
-    // order: u64,
-
 fn do_submit(
     args: &Vec<serde_json::Value>,
     d: &serde_json::Map<String, serde_json::Value>,
