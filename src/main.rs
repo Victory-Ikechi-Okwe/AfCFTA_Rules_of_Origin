@@ -126,6 +126,12 @@ fn make_rejected_message(order: u64) -> Message {
     Message::Text(v.to_string())
 }
 
+// REFACTOR: we have the id, which should be the basis for a Rule instance, but history
+// led us to this point. We should remove the PathBuf Rule construction for something
+// based on Rule { id: } e.g. make_rule(id) which would be populated using something
+// like the code below
+// generally: all the functions that take PathBuf and look around in `data/rules` should
+// be rewritten in terms of Rule { id: }
 fn extract_rev(p: &PathBuf) -> u64 {
     match p.as_path().file_stem() {
         None => 0,
