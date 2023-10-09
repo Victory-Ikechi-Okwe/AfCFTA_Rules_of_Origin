@@ -9,12 +9,11 @@ use tokio_tungstenite::tungstenite::Error as TTError;
 use tokio_tungstenite::tungstenite::Result as TTResult;
 use tungstenite::error::CapacityError::MessageTooLong;
 
-use std::path::PathBuf;
-use glob::glob;
-
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::collections::HashMap;
+
+mod rule;
 
 type Peers = Arc<Mutex<HashMap<SocketAddr, AtomicU64>>>;
 
@@ -68,13 +67,6 @@ struct Reaction {
     order: u64,
 }
 
-#[derive(Debug)]
-struct Rule {
-    path: PathBuf,
-    id: String,
-    rev: u64,
-}
-
 fn make_failed(order: u64, act: ActionT, m: String) -> Reaction {
     let doc = serde_json::json!({ "error" : m });
     Reaction { status: ReactionStatus::Failed, doc: doc, act: act, order: order }
@@ -126,84 +118,9 @@ fn make_rejected_message(order: u64) -> Message {
     Message::Text(v.to_string())
 }
 
-// REFACTOR: we have the id, which should be the basis for a Rule instance, but history
-// led us to this point. We should remove the PathBuf Rule construction for something
-// based on Rule { id: } e.g. make_rule(id) which would be populated using something
-// like the code below
-// generally: all the functions that take PathBuf and look around in `data/rules` should
-// be rewritten in terms of Rule { id: }
-fn extract_rev(p: &PathBuf) -> u64 {
-    match p.as_path().file_stem() {
-        None => 0,
-        Some(st) => { st.to_str().unwrap().parse().unwrap() }
-    }
-}
-
-fn extract_id(p: &PathBuf) -> String {
-    p.parent().unwrap().file_stem().unwrap().to_str().unwrap().to_string()
-}
-
-fn find_latest_rule(path: &PathBuf) -> Option<Rule> {
-    let vers = path.join("*.json");
-
-    debug!("searching for rules: vers={:?}", vers);
-    let po = match glob(vers.to_str().unwrap()) {
-        Ok(it) => it.filter_map(|p| p.ok()).max_by_key(extract_rev),
-        _ => None
-    };
-
-    match po {
-        Some(ref p) => Some(Rule { path: p.clone(), id: extract_id(&p), rev: extract_rev(&p) }),
-        None => None,
-    }
-}
-
-fn next_stored_rule(path: &PathBuf) -> Rule {
-    match find_latest_rule(path) {
-        Some(rule) => {
-            debug!("found latest rule (rule={:?})", rule);
-            match rule.path.as_path().file_stem() {
-                Some(st) => {
-                    let rev: u64 = st.to_str().unwrap().parse().unwrap();
-                    debug!("next rev (rev={:?})", rev);
-                    let path = path.join(format!("{:?}.json", rev + 1));
-                    Rule {
-                        path: path.clone(),
-                        rev: rev,
-                        id: extract_id(&path),
-                    }
-                },
-                None => {
-                    let path = path.join("1.json");
-                    Rule { path: path.clone(), rev: 1, id: extract_id(&path) }
-                }
-            }
-        },
-        None => {
-            let path = path.join("1.json");
-            Rule { path: path.clone(), rev: 1, id: extract_id(&path) }
-        }
-    }
-}
-
-fn rule_path(id: &String) -> PathBuf {
-    [".", "data", "rules", &id].iter().collect()
-}
-
-fn assure_dir_for_rule(id: &String) -> PathBuf {
-    let path: PathBuf = rule_path(id);
-
-    match std::fs::create_dir_all(&path) {
-        Err(e) => debug!("failed to create store dir (dir={:?}, e={:?}", path, e),
-        _ => { }
-    };
-
-    path
-}
-
-fn store_rule(rule: &Rule, d: &serde_json::Map<String, serde_json::Value>) -> bool {
+fn store_rule(rule: &rule::Rule, d: &serde_json::Map<String, serde_json::Value>) -> bool {
     debug!("writing rule (rule={:?})", rule);
-    match std::fs::File::create(&rule.path) {
+    match std::fs::File::create(&rule.path()) {
         Ok(f) => {
             match serde_json::to_writer(f, &d) {
                 Ok(_) => {
@@ -223,19 +140,14 @@ fn store_rule(rule: &Rule, d: &serde_json::Map<String, serde_json::Value>) -> bo
     }
 }
 
-fn find_rule_by_rev(id: &String, rev: u64) -> Option<Rule> {
-    let path = rule_path(id).join(format!("{:?}.json", rev));
-    if path.exists() { Some(Rule { path: path.clone(), id: id.clone(), rev: rev }) } else { None }
-}
-
-fn find_rule_by_args(args: &Vec<serde_json::Value>) -> Option<Rule> {
+fn find_rule_by_args(args: &Vec<serde_json::Value>) -> Option<rule::Rule> {
     match args.as_slice() {
         [serde_json::Value::String(id), serde_json::Value::Number(rev), ..] => {
             debug!("id={:?}; rev={:?}", id, rev);
-            find_rule_by_rev(id, rev.as_u64().unwrap())
+            rule::find_rule_by_rev(id, rev.as_u64().unwrap())
         },
         [serde_json::Value::String(id)] => {
-            find_latest_rule(&rule_path(&id.to_string()))
+            rule::find_latest_rule(id)
         },
         _ => None
     }
@@ -253,16 +165,16 @@ fn do_publish(
     match find_rule_by_args(args) {
         Some(rule) => {
             debug!("located rule (rule={:?})", rule);
-            let target = rule.path.parent().unwrap().join("published");
+            let target = rule.path().parent().unwrap().join("published");
             let _ = std::fs::remove_file(&target);
-            match std::os::unix::fs::symlink(&rule.path, &target) {
+            match std::os::unix::fs::symlink(&rule.path(), &target) {
                 Ok(_) => {
-                    debug!("linked (path={:?}, target={:?}", rule.path, target);
+                    debug!("linked (path={:?}, target={:?}", rule.path(), target);
                     let doc = serde_json::json!({ "id" : &rule.id, "revision" : rule.rev });
                     make_ok(order, ActionT::Publish, &doc)
                 },
                 _ => {
-                    debug!("failed link (path={:?}, target={:?}", rule.path, target);
+                    debug!("failed link (path={:?}, target={:?}", rule.path(), target);
                     make_failed_with_str(order, ActionT::Publish, "failed change version")
                 }
             }
@@ -295,8 +207,7 @@ fn do_store(
 
     match id_opt {
         Some(id) => {
-            let path = assure_dir_for_rule(&id);
-            let rule = next_stored_rule(&path);
+            let rule = rule::next_revision(&id);
 
             debug!("storing rule (rule={:?}", rule);
             store_rule(&rule, d);
@@ -320,11 +231,11 @@ fn do_get(
     match find_rule_by_args(args) {
         Some(rule) => {
             debug!("GET: found rule (rule={:?}; args={:?})", rule, args);
-            let f = match std::fs::File::open(&rule.path) {
+            let f = match std::fs::File::open(&rule.path()) {
                 Ok(f) => f,
                 _ => {
                     return make_failed(
-                        order, ActionT::Get, format!("failed to open rule file (path={:?})", rule.path)
+                        order, ActionT::Get, format!("failed to open rule file (path={:?})", rule.path())
                     );
                 }
             };
