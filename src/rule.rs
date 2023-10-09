@@ -1,6 +1,8 @@
 use glob::glob;
 use log::*;
-use std::path::PathBuf;
+use std::{
+    path::PathBuf,
+};
 
 // REFACTOR: we have the id, which should be the basis for a Rule instance, but history
 // led us to this point. We should remove the PathBuf Rule construction for something
@@ -29,10 +31,44 @@ impl Rule {
         self.path.clone()
     }
 
-    pub fn publish() {
+    pub fn publish(&self) -> bool {
+        let target = self.path.parent().unwrap().join("published");
+
+        info!("storing (rule={:?})", self);
+        std::fs::remove_file(&target).expect("failed to remove target");
+
+        match std::os::unix::fs::symlink(&self.path, &target) {
+            Ok(_) => {
+                debug!("linked (path={:?}, target={:?}", self.path, target);
+                true
+            },
+            _ => {
+                debug!("failed link (path={:?}, target={:?}", self.path, target);
+                false
+            }
+        }
     }
 
-    pub fn store() {
+    pub fn store(&self, d: &serde_json::Map<String, serde_json::Value>) -> bool {
+        debug!("writing rule (rule={:?})", self);
+        match std::fs::File::create(&self.path) {
+            Ok(f) => {
+                match serde_json::to_writer(f, d) {
+                    Ok(_) => {
+                        debug!("wrote rule (rule={:?}", self);
+                        true
+                    },
+                    Err(e) => {
+                        debug!("failed to write rule (rule={:?}; e={:?})", self, e);
+                        false
+                    }
+                }
+            },
+            Err(e) => {
+                debug!("failed to create file (rule={:?}; e={:?}", self, e);
+                false
+            }
+        }
     }
 }
 

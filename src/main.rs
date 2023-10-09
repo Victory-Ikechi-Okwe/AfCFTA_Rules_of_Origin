@@ -118,28 +118,6 @@ fn make_rejected_message(order: u64) -> Message {
     Message::Text(v.to_string())
 }
 
-fn store_rule(rule: &rule::Rule, d: &serde_json::Map<String, serde_json::Value>) -> bool {
-    debug!("writing rule (rule={:?})", rule);
-    match std::fs::File::create(&rule.path()) {
-        Ok(f) => {
-            match serde_json::to_writer(f, &d) {
-                Ok(_) => {
-                    debug!("wrote rule (rule={:?}", rule);
-                    true
-                },
-                Err(e) => {
-                    debug!("failed to write rule (rule={:?}; e={:?})", rule, e);
-                    false
-                }
-            }
-        },
-        Err(e) => {
-            debug!("failed to create file (rule={:?}; e={:?}", rule, e);
-            false
-        }
-    }
-}
-
 fn find_rule_by_args(args: &Vec<serde_json::Value>) -> Option<rule::Rule> {
     match args.as_slice() {
         [serde_json::Value::String(id), serde_json::Value::Number(rev), ..] => {
@@ -164,19 +142,11 @@ fn do_publish(
 
     match find_rule_by_args(args) {
         Some(rule) => {
-            debug!("located rule (rule={:?})", rule);
-            let target = rule.path().parent().unwrap().join("published");
-            let _ = std::fs::remove_file(&target);
-            match std::os::unix::fs::symlink(&rule.path(), &target) {
-                Ok(_) => {
-                    debug!("linked (path={:?}, target={:?}", rule.path(), target);
-                    let doc = serde_json::json!({ "id" : &rule.id, "revision" : rule.rev });
-                    make_ok(order, ActionT::Publish, &doc)
-                },
-                _ => {
-                    debug!("failed link (path={:?}, target={:?}", rule.path(), target);
-                    make_failed_with_str(order, ActionT::Publish, "failed change version")
-                }
+            if rule.publish() {
+                let doc = serde_json::json!({ "id" : rule.id.clone(), "revision" : rule.rev });
+                make_ok(order, ActionT::Publish, &doc)
+            } else {
+                make_failed_with_str(order, ActionT::Publish, "failed change version")
             }
         },
         None => {
@@ -208,12 +178,13 @@ fn do_store(
     match id_opt {
         Some(id) => {
             let rule = rule::next_revision(&id);
+            let resp = serde_json::json!({ "id" : rule.id, "revision" : rule.rev });
 
-            debug!("storing rule (rule={:?}", rule);
-            store_rule(&rule, d);
-
-            let doc = serde_json::json!({ "id" : rule.id, "revision" : rule.rev });
-            make_ok(order, ActionT::Store, &doc)
+            if rule.store(&d) {
+                make_ok(order, ActionT::Store, &resp)
+            } else {
+                make_failed_with_str(order, ActionT::Publish, "failed store")
+            }
         },
         None => {
             debug!("store: no id");
