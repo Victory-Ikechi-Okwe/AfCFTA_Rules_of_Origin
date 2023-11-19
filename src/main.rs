@@ -126,7 +126,8 @@ fn find_rule_by_args(args: &Vec<serde_json::Value>) -> Option<rule::Rule> {
             rule::find_rule_by_rev(id, rev.as_u64().unwrap())
         },
         [serde_json::Value::String(id)] => {
-            rule::find_latest_rule(id)
+            debug!("id={:?}; published", id);
+            rule::find_published_rule(id)
         },
         _ => None
     }

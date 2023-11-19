@@ -33,11 +33,12 @@ impl Rule {
 
     pub fn publish(&self) -> bool {
         let target = self.path.parent().unwrap().join("published");
+        let fp: PathBuf = [".", self.path.file_name().unwrap().to_str().unwrap()].iter().collect();
 
         info!("storing (rule={:?})", self);
-        std::fs::remove_file(&target).expect("failed to remove target");
+        let _ = std::fs::remove_file(&target);
 
-        match std::os::unix::fs::symlink(&self.path, &target) {
+        match std::os::unix::fs::symlink(&fp, &target) {
             Ok(_) => {
                 debug!("linked (path={:?}, target={:?}", self.path, target);
                 true
@@ -76,13 +77,27 @@ pub fn rule_dir(id: &String) -> PathBuf {
     [".", "data", "rules", id].iter().collect()
 }
 
-pub fn rule_path(id: &String, rev: u64) -> PathBuf {
-    rule_dir(id).join(format!("{:?}.json", rev))
+pub fn rule_path(id: &String, part: &str) -> PathBuf {
+    rule_dir(id).join(part)
 }
 
 pub fn find_rule_by_rev(id: &String, rev: u64) -> Option<Rule> {
-    let path = rule_path(id, rev);
+    let path = rule_path(id, &format!("{}.json", rev));
+    debug!("searching for rule (id={:?}; path={:?})", id, path);
     if path.exists() {
+        Some(Rule { path: path.clone(), dir: rule_dir(id).clone(), id: id.to_string(), rev: rev })
+    } else {
+        None
+    }
+}
+
+pub fn find_published_rule(id: &String) -> Option<Rule> {
+    let path = rule_path(id, "published");
+    debug!("searching for rule (id={:?}; path={:?})", id, path);
+    if path.exists() {
+        let real_path = std::fs::read_link(&path).ok()?;
+        let rev = extract_rev(&real_path);
+        debug!("found path (rp={:?}, rev={:?})", real_path, rev);
         Some(Rule { path: path.clone(), dir: rule_dir(id).clone(), id: id.to_string(), rev: rev })
     } else {
         None
