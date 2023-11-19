@@ -14,6 +14,7 @@ use std::sync::{Arc, Mutex};
 use std::collections::HashMap;
 
 mod rule;
+mod submissions;
 
 type Peers = Arc<Mutex<HashMap<SocketAddr, AtomicU64>>>;
 
@@ -227,8 +228,15 @@ fn do_submit(
 ) -> Reaction {
     debug!("submit: {:?}, {:?}", args, d);
 
-    let doc = serde_json::json!({ });
-    make_ok(order, ActionT::Submit, &doc)
+    match submissions::store(d) {
+        Some(id) => {
+            let resp = serde_json::json!({ "id" : id });
+            make_ok(order, ActionT::Submit, &resp)
+        }
+        None => {
+            make_failed_with_str(order, ActionT::Publish, "failed to queue")
+        }
+    }
 }
 
 fn process_cmd(
