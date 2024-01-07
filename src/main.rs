@@ -13,6 +13,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::collections::HashMap;
 
+mod db;
 mod rule;
 mod submissions;
 
@@ -158,6 +159,15 @@ fn do_publish(
     }
 }
 
+fn val_to_in_effect(o: &serde_json::Value) -> db::InEffect {
+    db::InEffect {
+        loc: o["in"].as_str().unwrap().to_string(),
+        from: o["from"].as_str().unwrap().to_string(),
+        to: o["to"].as_str().unwrap().to_string(),
+        tz: o["tz"].as_str().unwrap().to_string(),
+    }
+}
+
 // [(id)], { to_store } -> [id, rev]
 // store document, id? new rev : new doc
 fn do_store(
@@ -183,6 +193,16 @@ fn do_store(
             let resp = serde_json::json!({ "id" : rule.id, "revision" : rule.rev });
 
             if rule.store(&d) {
+                match &d["in_effect"] {
+                    serde_json::Value::Array(ie) => {
+                        let vals: Vec<db::InEffect> = ie.iter().map(val_to_in_effect).collect();
+                        db::store(id, &vals);
+                    },
+                    _ => {
+                        debug!("no in_effect");
+                    }
+                }
+
                 make_ok(order, ActionT::Store, &resp)
             } else {
                 make_failed_with_str(order, ActionT::Publish, "failed store")
