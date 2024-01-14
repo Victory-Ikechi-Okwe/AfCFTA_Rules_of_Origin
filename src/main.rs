@@ -196,10 +196,28 @@ fn do_store(
                 match &d["in_effect"] {
                     serde_json::Value::Array(ie) => {
                         let vals: Vec<db::InEffect> = ie.iter().map(val_to_in_effect).collect();
-                        db::store(id, &vals);
+                        db::store(&id, &vals);
                     },
                     _ => {
                         debug!("no in_effect");
+                    }
+                }
+
+                match &d["input_conditions"] {
+                    serde_json::Value::Array(conds) => {
+                        let keys: Vec<String> = conds.iter().map(|v| match v {
+                            serde_json::Value::Object(m) => {
+                                debug!("map: {:?}", m);
+                                Some(m["expression"]["key"].as_str().unwrap().to_string())
+                            },
+                            _ => None
+                        }).flatten().collect();
+
+                        debug!("keys: {:?}", keys);
+                        db::store_keys(&id, &keys);
+                    },
+                    _ => {
+                        debug!("no conditions");
                     }
                 }
 

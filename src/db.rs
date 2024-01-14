@@ -10,28 +10,46 @@ pub struct InEffect {
     pub tz: String,
 }
 
-pub fn store(id: String, effects: &Vec<InEffect>) -> bool {
-//    let conn = Connection::open("data/rules.db")?;
+fn open_db() -> Connection {
+    let should_init = !std::path::Path::new("data/rules.db").exists();
     let conn = Connection::open("data/rules.db").unwrap();
 
-    conn.execute_batch(
-        "BEGIN;
-         CREATE TABLE IF NOT EXISTS in_effect (
-               id           INTEGER PRIMARY KEY AUTOINCREMENT,
-               rule_id      text,
-               version      text,
-               jurisdiction text,
-               from_t       text,
-               to_t         text,
-               tz           text
-         );
-         CREATE TABLE IF NOT EXISTS applicable (
-               id      int  PRIMARY KEY,
-               rule_id text,
-               version text,
-               key     text
-         );
-         COMMIT;").unwrap();
+    if should_init {
+        conn.execute_batch(
+          "BEGIN;
+           CREATE TABLE IF NOT EXISTS in_effect (
+                 id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                 rule_id      text,
+                 version      text,
+                 jurisdiction text,
+                 from_t       text,
+                 to_t         text,
+                 tz           text
+           );
+           CREATE TABLE IF NOT EXISTS applicable (
+                 id      int  PRIMARY KEY,
+                 rule_id text,
+                 version text,
+                 key     text
+           );
+           COMMIT;").unwrap();
+    }
+
+    conn
+}
+
+pub fn store_keys(id: &String, keys: &Vec<String>) -> bool {
+    let conn = open_db();
+    let mut stmt = conn.prepare("INSERT INTO applicable (rule_id, version, key) VALUES (?1, ?2, ?3)").unwrap();
+    for k in keys.iter() {
+        stmt.execute([id.clone(), String::from(""), k.clone()]).unwrap();
+    }
+    true
+}
+
+pub fn store(id: &String, effects: &Vec<InEffect>) -> bool {
+//    let conn = Connection::open("data/rules.db")?;
+    let conn = open_db();
 
     let mut stmt = conn.prepare("
       INSERT INTO in_effect (rule_id, version, jurisdiction, from_t, to_t, tz)
