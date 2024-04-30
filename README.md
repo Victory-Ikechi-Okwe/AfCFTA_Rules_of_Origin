@@ -1,23 +1,26 @@
-A Rust implementation of the rule-taker (RT) and rule-reserve (RR) components of DWDS.
+A Rust implementation of the rule-taker (RT) and rule-reserve (RR) design
+components of DWDS.
 
 # Design
 
 The programs in this project are intended to be the simplest possible
-implementation of a processing "backend" for the DWD design. This is referred to
-as the "triad". This includes the RT (rule-taker) and RR (rule-reserve)
-components of the design. The RM (rule-maker) component is intended to be
-implemented as an "interactive frontend" and, therefore, is not part of this
-"backend". Part of this "backend" does serve as a receiver of rule definitions
-from any RM implementation.
+implementation of a processing "backend" for the DWD design. This includes the
+RT (rule-taker) and RR (rule-reserve) components of the design. Portions of
+each of those roles are divided amongst a few programs implemented in this
+repository.
 
-This is an implementation designed to work in a particular way that implements
-the abstract design. You won't find programs named "RR" and "RT" that directly
-fulfill those roles. Portions of each of those roles are divided amongst a few
-programs implemented in this repository.
+
+The RM (rule-maker) component is intended to be implemented as an "interactive
+frontend" and, therefore, is not part of this "backend". Part of this "backend"
+does serve as a storage sink for rule definitions that could be sent from any RM
+implementation.
 
 This implementation follows a "decomposed" design. Rather than containing a
 monolithic single application, it's made up of several small binaries that each
-perform a specific role.
+perform a specific role. These binaries can be composed in different ways,
+possibly with additional binaries, to create a complete system. This delineates
+the anticipated "moving parts" of a RR and RT implementation so that they can be
+studied individually by programmers working on other implementations.
 
 # Moving parts
 ## `api`
@@ -32,14 +35,14 @@ websockets) but, since it anticipates single-page applications (SPA) as the
 primary integration, it uses websockets due to that technology's popularity as a
 basic transport for message-based protocols in Javascript SPAs.
 
-## `sieve`
+## `select`
 
 _This functionality was prototyped in the `api` program and needs to be
 extracted into an independent program_.
 
-This program is designed to implement the "sieve" of the DWD algorithm. It
+This program is designed to implement the "select" of the DWD algorithm. It
 accepts a document as input and outputs a list of matching rule ids. It is
-invoked as `sieve <path/to/document>` and writes the list of matching rule ids
+invoked as `select <path/to/document>` and writes the list of matching rule ids
 to `STDOUT`.
 
 To support the submissions aspect of the storage protocol (see below), this
@@ -68,27 +71,26 @@ program accepts rules via `STDIN`.
 
 ## `sync`
 
-## `eval`
+## `invoke`
 
 Eventually, you'll want to generate an "ought" document from an "input"
-document, based on a rule. The `eval` program implements that core
+document, based on a rule. The `invoke` program implements that core
 functionality. It's designed to be used as part of this larger collection of
 programs as well as on its own (typically for testing purposes).
 
-This program accepts two arguments: `eval <rule-path> <document-path>`. This
+This program accepts two arguments: `invoke <rule-path> <document-path>`. This
 applies the rule found in `<rule-path>` to the document in
 `<document-path>`. The resulting "ought" document is written to `STDOUT`.
 
-The `api` program, after applying the "sieve" protocol defined in the DWD
+The `api` program, after applying the "select" protocol defined in the DWD
 specification, will invoke this program to build a set of "oughts". To
-facilitate this process, the `eval` program can also accept: `eval <rules-dir>
+facilitate this process, the `invoke` program can also accept: `invoke <rules-dir>
 <documents-dir> <oughts-dir>`. For each of the documents discovered in
-`<documents-dir>`, `eval` will apply all of the rules `<rules-dir>`. The
+`<documents-dir>`, `invoke` will apply all of the rules `<rules-dir>`. The
 resulting "ought" documents will be organized into the `<oughts-dir>` in
 subdirectories named after the corresponding document.
 
-Together with the submissions part of the `api`, the `eval` program satifies the
-rule-taker component of the design.
+This program forms part of the RT component of the DWD "triad" design.
 
 # Protocols
 
@@ -126,11 +128,15 @@ The commands are:
 
 ## Storage
 
+## Processing
+
+
+
 # Current state
 
-- `api`: Mostly implemented; will require improvement as `sync` and `eval` are implemented
+- `api`: Mostly implemented; will require improvement as `sync` and `invoke` are implemented
 - `sync`: Unimplemented
-- `eval`: Unimplemented
+- `invoke`: Unimplemented
 - `ingest`: Requires extraction from `api`
-- `sieve`: Requires extraction from `api`
+- `select`: Requires extraction from `api`
 
