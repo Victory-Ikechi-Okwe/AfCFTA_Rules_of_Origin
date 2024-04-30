@@ -61,13 +61,10 @@ The purpose of the `ingest` program is to accept rules and retain them on-disk
 (see below for the storage protocol). It is the sole writer of the "rule index"
 implemented as an SQLite DB.
 
-This program can be invoked as `ingest <path/to/rule>`. This reads the contents
-of the referenced rule file, adds the rule to the index and retains the rule
-file.
-
-This program is also capable of running persistently as a child process
-(intended to be spawned by the `api` program). When run in this mode, the
-program accepts rules via `STDIN`.
+This program can be invoked as `ingest <path/to/rule> [id]`. This reads the
+contents of the referenced rule file, adds the rule to the index and retains the
+rule file. If the optional `id` parameter is given, a new version of the
+identified rule is created.
 
 ## `sync`
 
