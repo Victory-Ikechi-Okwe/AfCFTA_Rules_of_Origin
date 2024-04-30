@@ -71,6 +71,18 @@ program accepts rules via `STDIN`.
 
 ## `sync`
 
+The `sync` program downloads rules stored on the network and integrates them
+with the local rule storage. This program only downloads the rules from the
+remote network location. It uses `ingest` to add them to the rule storage.
+
+This program accepts a URL or an IPFS content id as an argument (`sync
+<url|content_id>`). It expects to find an [RSS
+2.0](https://www.rssboard.org/rss-specification) file at the remote
+location. That file (or "feed") should contain references to _all_ of the rules
+retained at the remote location. The feed should contain rule ids, versions, and
+references to the full rule content to allow `sync` to determine whether the
+full content should be downloaded and stored.
+
 ## `invoke`
 
 Eventually, you'll want to generate an "ought" document from an "input"
@@ -129,8 +141,6 @@ The commands are:
 ## Storage
 
 ## Processing
-
-
 
 # Current state
 
