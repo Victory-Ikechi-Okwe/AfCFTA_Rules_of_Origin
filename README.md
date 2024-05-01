@@ -175,6 +175,35 @@ The commands are:
 
 ## Storage
 
+All data is retained in the `data/` directory. Rules are stored "as received" in
+`data/rules/`. This directory is organised by rule id and revision. A particular
+received rule can be found in `data/rules/<rule_id>/<revision>.json`.
+
+The SQLite database that serves as the index for `select` and `ingest` is kept
+in `data/rules.db`. It contains two tables that drive the "in effect" and
+"applicable" classifications:
+
+```
+CREATE TABLE in_effect (
+                 id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                 rule_id      text,
+                 version      text,
+                 jurisdiction text,
+                 from_t       text,
+                 to_t         text,
+                 tz           text
+           );
+```
+
+```
+CREATE TABLE applicable (
+                 id      int  PRIMARY KEY,
+                 rule_id text,
+                 version text,
+                 key     text
+           );
+```
+
 ## Processing
 
 # Current state
