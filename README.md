@@ -206,6 +206,15 @@ CREATE TABLE applicable (
 
 ## Processing
 
+Storing a rule
+
+1. Connect to the `api` web socket
+1. Write `['STORE', ['1234'], { body_of_rule }]` in JSON format
+1. `api` writes `{ body_of_rule }` to a temporary file
+1. `api` runs `ingest temp/file/path 1234`
+1. `ingest` parses the rule JSON and writes the necessary rows into `data/rule.db`
+1. `ingest` moves the temporary file into `data/rules/1234/1.json` (assuming this is the first revision)
+
 # Current state
 
 - `api`: Mostly implemented; will require improvement as `sync` and `invoke` are implemented
