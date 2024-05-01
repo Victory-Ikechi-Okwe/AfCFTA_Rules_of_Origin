@@ -162,7 +162,7 @@ The commands are:
   and writes it to the web socket. The `doc` part of the message is
   ignored. There are two args: `rule_id`, `version`. The `version` argument is
   optional.
-- `[GET, [rule_id, version], {}]`: Publishes the referenced rule, making it the
+- `[PUBLISH, [rule_id, version], {}]`: Publishes the referenced rule, making it the
   active version of the rule when documents are sumitted. The `doc` part of the
   message is ignored. There are two args: `rule_id`, `version`. The `version`
   argument is optional. If not specified, the highest version is used.
