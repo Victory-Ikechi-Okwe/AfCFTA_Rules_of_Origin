@@ -9,6 +9,30 @@ RT (rule-taker) and RR (rule-reserve) components of the design. Portions of
 each of those roles are divided amongst a few programs implemented in this
 repository.
 
+At first glance, this implementation might seem shockingly simple. This is by
+design. It's best to imagine the DWDS specification as a small programming
+language that captures the essence of its domain via the arrangement of logic
+into tables that can be interpreted with a minimal number of key logical
+operators. This implementation is the "kernel" of that programming language.
+
+The `invoke` program is the interpreter of that minimal language. The `select`
+program implements an "odd modularity" by organising rules by "when" they are
+needed.  The `select` program is a loader for that "odd module system". The
+`sync` program implements a "packaging" protocol that permits sharing of
+rules. `Ingest` is context-aware revision control.
+
+We assume that this kernel would be integrated into a larger system. Also, the
+RM needs a "backend" to work with. The `api` serves as a "gateway" to the rest
+of the system. It arranges to invoke the other programs and orchestrates a
+suitable processing model (described later).
+
+All of these elements could be implemented by more complex software. While that
+might be the case, doing so would obscure a basic understanding of the DWDS
+design. This implementation's simplicity serves to educate the reader about the
+fundamentals of DWDS. It's up to them to decide whether this implementation is
+suitable for their use (we suspect it is) or whether they would like to
+implement something more complex. That might be a suitable decision in their
+context.
 
 The RM (rule-maker) component is intended to be implemented as an "interactive
 frontend" and, therefore, is not part of this "backend". Part of this "backend"
