@@ -45,6 +45,12 @@ accepts a document as input and outputs a list of matching rule ids. It is
 invoked as `select <path/to/document>` and writes the list of matching rule ids
 to `STDOUT`.
 
+The operating idea for this program is that figuring out which rules are "in
+effect" and "applicable" should be no more complicated than some basic SQL
+queries. We take that literally and record everything we need when `ingest`
+accepts a rule. All this program does is run those queries. It's an independent
+binary so we can make sure that it remains a "reader" of the DB.
+
 To support the submissions aspect of the storage protocol (see below), this
 program is also capable of running persistently as a child process (intended to
 be spawned by the `api` program). When run in this mode, the program accepts
@@ -61,10 +67,18 @@ The purpose of the `ingest` program is to accept rules and retain them on-disk
 (see below for the storage protocol). It is the sole writer of the "rule index"
 implemented as an SQLite DB.
 
-This program can be invoked as `ingest <path/to/rule> [id]`. This reads the
+We assume that rules are far more often read than written. To make `select`
+simple, this program takes the time to parse submitted rules and transform the
+metadata into entries in a couple of DB tables. This simplifies `select`,
+allowing it to do less and operate faster.
+
+This program can be invoked as `ingest <path/to/rule> [<id>]`. This reads the
 contents of the referenced rule file, adds the rule to the index and retains the
-rule file. If the optional `id` parameter is given, a new version of the
-identified rule is created.
+rule file. The rule id argument is optional. The `ingest` program assumes that
+the calling context (`api`, `sync`, or an interactive invocation), if it
+provides the `id` argument, "knows better". It does not verify whether the
+provided rule id matches the `id` field of the rule metadata. If the argument is
+not provided, `ingest` parses it from the `id` field in the rule file.
 
 ## `sync`
 
