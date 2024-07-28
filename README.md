@@ -204,6 +204,14 @@ CREATE TABLE applicable (
            );
 ```
 
+## Techinical choices
+
+[TBD]
+
+- sqlite
+- websockets
+- rss
+
 ## Processing
 
 Storing a rule
