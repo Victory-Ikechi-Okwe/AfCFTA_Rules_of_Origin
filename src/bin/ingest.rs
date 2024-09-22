@@ -109,6 +109,34 @@ fn find_latest_rule(id: &String) -> Option<u64> {
     }
 }
 
+fn build_in_effect(vals: &serde_json::Value) -> Option<Vec<InEffect>> {
+    match vals {
+        serde_json::Value::Array(ie) => {
+            Some(ie.iter().map(make_in_effect).collect())
+        },
+        _ => {
+            None
+        }
+    }
+}
+
+fn build_applicable(vals: &serde_json::Value) -> Option<Vec<String>> {
+    match vals {
+        serde_json::Value::Array(conds) => {
+            let keys: Vec<String> = conds.iter().map(|v| match v {
+                serde_json::Value::Object(m) => {
+                    debug!("map: {:?}", m);
+                    Some(m["expression"]["key"].as_str().unwrap().to_string())
+                },
+                _ => None
+            }).flatten().collect();
+
+            Some(keys)
+        },
+        _ => None
+    }
+}
+
 // follows an update-or-insert model: if the rule has an 'id' property,
 // that's used to update/insert the rule. Otherwise, it's assumed the rule is new.
 fn main() {
@@ -155,30 +183,21 @@ fn main() {
                 }
             }
 
-            match &o["in_effect"] {
-                serde_json::Value::Array(ie) => {
-                    let vals: Vec<InEffect> = ie.iter().map(make_in_effect).collect();
-                    store_in_effect(&conn, &id, rev, &vals);
-                },
-                _ => {
+            match build_in_effect(&o["in_effect"]) {
+                Some(ie) => {
+                    store_in_effect(&conn, &id, rev, &ie);
+                }
+                None => {
                     println!("no in effect");
                 }
             }
-            match &o["input_conditions"] {
-                serde_json::Value::Array(conds) => {
-                    let keys: Vec<String> = conds.iter().map(|v| match v {
-                        serde_json::Value::Object(m) => {
-                            debug!("map: {:?}", m);
-                            Some(m["expression"]["key"].as_str().unwrap().to_string())
-                        },
-                        _ => None
-                    }).flatten().collect();
 
-                    debug!("keys: {:?}", keys);
+            match build_applicable(&o["input_conditions"]) {
+                Some(keys) => {
                     store_keys(&conn, &id, rev, &keys);
-                },
-                _ => {
-                    debug!("no conditions");
+                }
+                None => {
+                    println!("no applicable");
                 }
             }
         },
