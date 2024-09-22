@@ -4,6 +4,9 @@ use std::env;
 
 fn open_db() -> Connection {
     let should_init = !std::path::Path::new("data/rules.db").exists();
+
+    std::fs::create_dir("./data").expect("failed to create directory");
+
     let conn = Connection::open("data/rules.db").unwrap();
 
     if should_init {
