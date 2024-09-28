@@ -93,7 +93,7 @@ fn extract_rev(p: &PathBuf) -> u64 {
     }
 }
 
-fn find_latest_rule(id: &String) -> Option<u64> {
+fn find_latest_rev(id: &String) -> Option<u64> {
     let dir = rule_dir(id);
     let vers = dir.join("*.json");
 
@@ -137,6 +137,28 @@ fn build_applicable(vals: &serde_json::Value) -> Option<Vec<String>> {
     }
 }
 
+fn store_rule(id: &String, rev: u64, o: &serde_json::Value) {
+    let path = rule_dir(&id).join(format!("{:?}.json", rev));
+    println!("rev={:?}; path={:?}", rev, path);
+
+    // TODO: design a binary format to retain, not JSON, which we need to parse
+    match std::fs::File::create(&path) {
+        Ok(f) => {
+            match serde_json::to_writer(f, &o) {
+                Ok(_) => {
+                    println!("wrote rule (rule={:?}", path);
+                },
+                Err(e) => {
+                    println!("failed to write rule (rule={:?}; e={:?})", path, e);
+                }
+            }
+        },
+        Err(e) => {
+            println!("failed to create file (rule={:?}; e={:?}", path, e);
+        }
+    }
+}
+
 // follows an update-or-insert model: if the rule has an 'id' property,
 // that's used to update/insert the rule. Otherwise, it's assumed the rule is new.
 fn main() {
@@ -159,29 +181,10 @@ fn main() {
             let conn = open_db();
             println!("id={:?}", id);
 
-            let rev = match find_latest_rule(&id) {
+            let rev = match find_latest_rev(&id) {
                 Some(r) => r + 1,
                 None => 0
             };
-            let path = rule_dir(&id).join(format!("{:?}.json", rev));
-            println!("rev={:?}; path={:?}", rev, path);
-
-            // TODO: design a binary format to retain, not JSON, which we need to parse
-            match std::fs::File::create(&path) {
-                Ok(f) => {
-                    match serde_json::to_writer(f, &o) {
-                        Ok(_) => {
-                            println!("wrote rule (rule={:?}", path);
-                        },
-                        Err(e) => {
-                            println!("failed to write rule (rule={:?}; e={:?})", path, e);
-                        }
-                    }
-                },
-                Err(e) => {
-                    println!("failed to create file (rule={:?}; e={:?}", path, e);
-                }
-            }
 
             match build_in_effect(&o["in_effect"]) {
                 Some(ie) => {
@@ -200,6 +203,8 @@ fn main() {
                     println!("no applicable");
                 }
             }
+
+            store_rule(&id, rev, &o);
         },
         _ => {
             println!("invalid args");
