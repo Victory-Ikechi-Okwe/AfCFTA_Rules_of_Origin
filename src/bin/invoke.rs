@@ -24,6 +24,74 @@ fn parse_json_file(path: &PathBuf) -> Option<serde_json::Value> {
     }
 }
 
+#[derive(Debug, Clone)]
+enum Scenario {
+    No,
+    Yes,
+    Maybe,
+    Both,
+    Invalid,
+}
+
+
+#[derive(Debug, Clone)]
+struct InputCond {
+    pub key: String,
+    pub val: String,
+    pub op: String,
+    pub sc: Vec<Scenario>,
+}
+
+fn parse_scenarios(vals: &serde_json::Value) -> Option<Vec<Scenario>> {
+    match &vals {
+        serde_json::Value::Array(scenarios) => {
+            println!("scenarios={:?}", scenarios);
+            Some(scenarios.iter().map(|v| match v {
+                serde_json::Value::String(s) => {
+                    match s.as_str() {
+                        "00" => Scenario::No,
+                        "01" => Scenario::Yes,
+                        "10" => Scenario::Maybe,
+                        "11" => Scenario::Both,
+                        _ => Scenario::Invalid,
+                    }
+                },
+                _ => Scenario::Invalid,
+            }).collect())
+        },
+        _ => None
+    }
+}
+
+fn parse_input_conditions(vals: &serde_json::Value) -> Option<Vec<InputCond>> {
+    match &vals["input_conditions"] {
+        serde_json::Value::Array(cond_vals) => {
+            let conds: Vec<InputCond> = cond_vals.iter().map(|v| match v {
+                serde_json::Value::Object(cond_o) => {
+                    let scenarios = parse_scenarios(&cond_o["scenarios"]);
+
+                    Some(InputCond {
+                        key: cond_o["expression"]["key"].as_str().unwrap().to_string(),
+                        val: cond_o["expression"]["value"].as_str().unwrap().to_string(),
+                        op: cond_o["expression"]["op"].as_str().unwrap().to_string(),
+                        sc: match scenarios.clone() {
+                            Some(v) => v.clone(),
+                            None => Vec::new(),
+                        },
+                    })
+                },
+                _ => None
+            }).flatten().collect();
+
+            Some(conds)
+        },
+        _ => {
+            println!("no input conditions");
+            None
+        }
+    }
+}
+
 fn single_run(path: &String, id: &String, rev: u64) {
     println!("single run: path={:?}; id={:?}; rev={:?}", path, id, rev);
 
@@ -32,7 +100,8 @@ fn single_run(path: &String, id: &String, rev: u64) {
 
     match [parse_json_file(&doc_path), parse_json_file(&rule_path)] {
         [Some(doc), Some(rule)] => {
-            println!("have both: {:?}, {:?}", doc, rule);
+            let conds = parse_input_conditions(&rule);
+            println!("conds={:?}", conds);
         },
         [Some(_), None] => {
             println!("no rule");
