@@ -204,6 +204,18 @@ CREATE TABLE applicable (
            );
 ```
 
+## Sifting
+
+The tables stored in the SQLite database are used in the "sifting" process. This will be implemented as the `select` tool. The implementation is in 3 phases:
+
+1. What happens when a new/revised rule is pushed to the API
+1. The "in effect" phase
+1. The "applicable" phase
+
+When a rule is sent to the API (`api`), records are added to an SQLite3 database. The "metadata" is pulled out of the rule and added to the "in_effect" table. This is fairly straightforward. After that, the rule is parsed and the relevant keys are extracted from the rule expressions. These are added to the "applicable" table.
+
+When the `select` tool is run, the effective metadata is resolved and (rule_id, version) pairs are SELECT'd where they match the effective metadata. These resulting pairs lead to a SELECT from the "applicable" table, yielding a set of (rule_id, version, key). Each row in the set is checked against the incoming document. All rows where the "key" value doesn't appear in the document are "sifted" out of the result set to yield a final set of (rule_id, version, key) that should be applied to the incoming document.
+
 ## Techinical choices
 
 [TBD]
