@@ -1,4 +1,5 @@
 use std::env;
+use std::collections::HashMap;
 use rusqlite::Connection;
 
 // lib: also in ingest.rs
@@ -81,7 +82,7 @@ fn load_context() -> Option<Context> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Ref {
     id: String,
     version: String,
@@ -95,6 +96,28 @@ fn find(ctx: Context, conn: Connection) -> rusqlite::Result<Vec<Ref>> {
 
     let refs = res?.collect::<Result<Vec<_>, _>>()?;
     Ok(refs)
+}
+
+// i think this could be simplified
+fn filter(refs: Vec<Ref>) -> Vec<Ref> {
+    let max_vers: HashMap<_, _> = refs.iter()
+        .map(|r| (&r.id, &r.version))
+        .fold(HashMap::new(), |mut acc, (id, ver)| {
+            acc.entry(id)
+                .and_modify(|v: &mut &String| {
+                    if v.parse::<u32>().unwrap() < ver.parse::<u32>().unwrap() {
+                        *v = ver;
+                    }
+                })
+                .or_insert(ver);
+            
+            acc
+        });
+
+    refs.iter()
+        .filter(|r| max_vers.get(&r.id).map(|v| *v) == Some(&r.version))
+        .map(|r| r.clone())
+        .collect()
 }
 
 fn main() {
@@ -111,14 +134,17 @@ fn main() {
         let keys = doc_keys(&doc).iter().map(|k| format!("'{}'", k)).collect::<Vec<_>>().join(", ");
         println!("keys: {}", keys);
 
-        match find(ctx, conn) {
+        let filtered_refs = match find(ctx, conn) {
             Ok(refs) => {
-                for r in refs {
-                    println!("ref={:?}", r);
-                }
+                Some(filter(refs))
             },
-            Err(e) => println!("err={:?}", e)
-        }
+            Err(e) => {
+                println!("err={:?}", e);
+                None
+            }
+        };
+
+        println!("filtered={:?}", filtered_refs);
         
 	// In etc/contents/default.json we'll find the default values for the jurisdiction. The current time is always calculated
         // "on the machine" by getting the current UTC time and converting it to the timezones in the rules selected from the DB.
