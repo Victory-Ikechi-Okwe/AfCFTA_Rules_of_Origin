@@ -16,6 +16,7 @@ env_logger = "0.10.0"
 serde_json = "1.0"
 glob = "*"
 rusqlite = "*"
+serde = { version = "1.0.217", features = ["derive"] }
 
 [dependencies.uuid]
 version = "1.4.1"
