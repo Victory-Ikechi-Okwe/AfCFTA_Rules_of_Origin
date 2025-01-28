@@ -89,10 +89,16 @@ struct Ref {
     key: String
 }
 
-fn find(ctx: Context, conn: Connection) -> rusqlite::Result<Vec<Ref>> {
-    let mut stmt = conn.prepare("SELECT e.rule_id, e.version, a.key FROM in_effect AS e JOIN applicable AS a on e.rule_id=a.rule_id AND e.version=a.version WHERE e.jurisdiction=? AND e.tz=?").unwrap();
-    let res = stmt.query_map([ctx.jurisdiction, ctx.tz], |r|
-                             Ok(Ref { id: r.get(0)?, version: r.get(1)?, key: r.get(2)? }));
+fn find(ctx: Context, conn: Connection, keys: Vec<String>) -> rusqlite::Result<Vec<Ref>> {
+    //    let joined_keys = keys.iter().map(|k| format!("'{}'", k)).collect::<Vec<_>>().join(", ");
+    let markers = vec!["?"].repeat(keys.len()).join(",");
+    let q = format!("SELECT e.rule_id, e.version, a.key FROM in_effect AS e JOIN applicable AS a on e.rule_id=a.rule_id AND e.version=a.version WHERE e.jurisdiction=? AND e.tz=? AND a.key IN ({})", markers);
+    
+    let mut stmt = conn.prepare(&q).unwrap();
+    let str_args = [vec![ctx.jurisdiction, ctx.tz].as_slice(), keys.as_slice()].concat();
+    let args = str_args.iter().map(|v| v as &dyn rusqlite::ToSql).collect::<Vec<_>>();
+    
+    let res = stmt.query_map(args.as_slice(), |r| Ok(Ref { id: r.get(0)?, version: r.get(1)?, key: r.get(2)? }));
 
     let refs = res?.collect::<Result<Vec<_>, _>>()?;
     Ok(refs)
@@ -131,10 +137,7 @@ fn main() {
 
         println!("ctx={:?}", ctx);
         
-        let keys = doc_keys(&doc).iter().map(|k| format!("'{}'", k)).collect::<Vec<_>>().join(", ");
-        println!("keys: {}", keys);
-
-        let filtered_refs = match find(ctx, conn) {
+        let filtered_refs = match find(ctx, conn, doc_keys(&doc)) {
             Ok(refs) => {
                 Some(filter(refs))
             },
