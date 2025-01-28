@@ -1,4 +1,39 @@
 use std::env;
+use rusqlite::Connection;
+
+// lib: also in ingest.rs
+fn open_db() -> Connection {
+    let should_init = !std::path::Path::new("data/rules.db").exists();
+
+    if !std::path::Path::new("data").exists() {
+        std::fs::create_dir("./data").expect("failed to create directory");
+    }
+
+    let conn = Connection::open("data/rules.db").unwrap();
+
+    if should_init {
+        conn.execute_batch(
+          "BEGIN;
+           CREATE TABLE IF NOT EXISTS in_effect (
+                 id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                 rule_id      text,
+                 version      text,
+                 jurisdiction text,
+                 from_t       text,
+                 to_t         text,
+                 tz           text
+           );
+           CREATE TABLE IF NOT EXISTS applicable (
+                 id      int  PRIMARY KEY,
+                 rule_id text,
+                 version text,
+                 key     text
+           );
+           COMMIT;").unwrap();
+    }
+
+    conn
+}
 
 fn doc_keys(doc: &serde_json::Value) -> Vec<String> {
     keys(doc, true)
@@ -32,13 +67,59 @@ fn keys(doc: &serde_json::Value, at_root: bool) -> Vec<String> {
     }
 }
 
+#[derive(serde::Deserialize, Debug)]
+struct Context {
+    jurisdiction: String,
+    tz: String
+}
+
+fn load_context() -> Option<Context> {
+    let f = std::fs::File::open("etc/contexts/default.json").expect("error");
+    match serde_json::from_reader(f) {
+        Ok(ctx) => Some(ctx),
+        Err(_) => None
+    }
+}
+
+#[derive(Debug)]
+struct Ref {
+    id: String,
+    version: String,
+    key: String
+}
+
+fn find(ctx: Context, conn: Connection) -> rusqlite::Result<Vec<Ref>> {
+    let mut stmt = conn.prepare("SELECT e.rule_id, e.version, a.key FROM in_effect AS e JOIN applicable AS a on e.rule_id=a.rule_id AND e.version=a.version WHERE e.jurisdiction=? AND e.tz=?").unwrap();
+    let res = stmt.query_map([ctx.jurisdiction, ctx.tz], |r|
+                             Ok(Ref { id: r.get(0)?, version: r.get(1)?, key: r.get(2)? }));
+
+    let refs = res?.collect::<Result<Vec<_>, _>>()?;
+    Ok(refs)
+}
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() == 2 {
         let f = std::fs::File::open(&args[1]).expect("error");
         let doc: serde_json::Value = serde_json::from_reader(f).expect("parse failure");
+        let conn = open_db();
 
-//        keys(&doc, None);
+        let ctx = load_context().unwrap();
+
+        println!("ctx={:?}", ctx);
+        
+        let keys = doc_keys(&doc).iter().map(|k| format!("'{}'", k)).collect::<Vec<_>>().join(", ");
+        println!("keys: {}", keys);
+
+        match find(ctx, conn) {
+            Ok(refs) => {
+                for r in refs {
+                    println!("ref={:?}", r);
+                }
+            },
+            Err(e) => println!("err={:?}", e)
+        }
+        
 	// In etc/contents/default.json we'll find the default values for the jurisdiction. The current time is always calculated
         // "on the machine" by getting the current UTC time and converting it to the timezones in the rules selected from the DB.
 
