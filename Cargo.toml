@@ -17,6 +17,7 @@ serde_json = "1.0"
 glob = "*"
 rusqlite = "*"
 serde = { version = "1.0.217", features = ["derive"] }
+daemonize = "0.5.0"
 
 [dependencies.uuid]
 version = "1.4.1"
