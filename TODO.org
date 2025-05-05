@@ -1,2 +1,3 @@
 * ~process_cmd~ or ~process_text~ xbshould be a queue submission
 * look at spath (https://github.com/cratesland/spath) for sieve and invoke
+* consider reimplementing ~api~ as HTTP with notifications written in the tail of the JSON response
