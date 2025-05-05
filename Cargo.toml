@@ -18,6 +18,9 @@ glob = "*"
 rusqlite = "*"
 serde = { version = "1.0.217", features = ["derive"] }
 daemonize = "0.5.0"
+chrono = "0.4.41"
+regex = "1.11.1"
+chrono-tz = "0.10.3"
 
 [dependencies.uuid]
 version = "1.4.1"
