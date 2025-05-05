@@ -1,0 +1,20 @@
+PROPERTIES
+  ID e059d4b8-a992-4da9-aa2f-8dafcd335cba
+
+IN EFFECT
+  IN CA-QC, FROM 2021-04-01T00:00, TO 2022-03-31T23:59, TZ Canada/Eastern
+  IN CA-NS, FROM 2021-04-01T00:00, TO 2022-03-31T23:59, TZ Canada/Atlantic
+
+# input conditions
+CONDITIONS
+  # another comment
+  container_status='loaded':         [00, 11, 00, 01, 01, 01, 00, 10]
+  validation='inspected':            [00, 11, 11, 00, 01, 00, 01, 01]
+  door_status='locked':              [11, 01, 00, 01, 00, 00, 01, 01]
+# output assertions
+ASSERTIONS
+  risk_code: 'green':                [01, 01, 00, 00, 00, 00, 01, 01]
+  risk_code: 'yellow':               [00, 00, 01, 00, 01, 01, 00, 00]
+  risk_code: 'red':                  [00, 00, 00, 01, 00, 00, 00, 00]
+  stevedore: 'notified':             [11, 10, 11, 01, 01, 01, 00, 10]
+  insurance: 'errors_and_omissions': [00, 01, 01, 10, 01, 00, 00, 01]
