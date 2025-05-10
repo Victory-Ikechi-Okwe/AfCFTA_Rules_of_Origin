@@ -66,8 +66,18 @@ struct AssertedValue(String, String);
 
 #[derive(Debug)]
 struct Assertion {
-    asserted_vals: Vec<AssertedValue>,
+    vals: Vec<AssertedValue>,
     cases: Vec<Case>,
+}
+
+impl Assertion {
+    fn new(k: &str, v: &str, cases: &Vec<Case>) -> Self {
+        Assertion {
+            // only one value is supported right now
+            vals: vec![AssertedValue(k.to_string(), v.to_string())],
+            cases: cases.to_vec(),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -103,6 +113,9 @@ static MATCH_ARR: Lazy<Regex> = Lazy::new(|| {
 });
 static MATCH_COND: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"(\w+)(=|!=|<=|>=|<|>)('[\w]+')\s*:\s*\[([\d\s,]+)\]").unwrap()
+});
+static MATCH_ASSERT: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"(\w+):=('[\w_]+'):\s*\[([\d\s,]+)\]").unwrap()
 });
 
 impl Parse {
@@ -196,7 +209,7 @@ impl Parse {
                 _ => Op::Unk,
             };
             let v = caps.get(3).unwrap().as_str();
-            let scenarios: Vec<_> = MATCH_ARR.split(caps.get(4).unwrap().as_str()).map(|s| {
+            let cases: Vec<_> = MATCH_ARR.split(caps.get(4).unwrap().as_str()).map(|s| {
                 match s {
                     "00" => Case::False,
                     "01" => Case::True,
@@ -206,11 +219,26 @@ impl Parse {
                 }
             }).collect();
 
-            self.rule.conditions.push(Condition::new(&k, &v, op, &scenarios));
+            self.rule.conditions.push(Condition::new(&k, &v, op, &cases));
         }
     }
 
     fn parse_line_assert(&mut self, ln: &String) {
+        if let Some(caps) = MATCH_ASSERT.captures(ln) {
+            let k = caps.get(1).unwrap().as_str();
+            let v = caps.get(2).unwrap().as_str();
+            let cases: Vec<_> = MATCH_ARR.split(caps.get(3).unwrap().as_str()).map(|s| {
+                match s {
+                    "00" => Case::False,
+                    "01" => Case::True,
+                    "10" => Case::Maybe,
+                    "11" => Case::Both,
+                    _ => Case::Invalid,
+                }
+            }).collect();
+
+            self.rule.assertions.push(Assertion::new(&k, &v, &cases));
+        }
     }
 }
 
