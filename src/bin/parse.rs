@@ -123,6 +123,15 @@ impl Parse {
         Parse { state: ActiveSection::None, rule: Rule::new() }
     }
 
+    fn parse_file(&mut self, fln: &String)  -> io::Result<()> {
+        let rdr = BufReader::new(File::open(fln)?);
+        for mln in rdr.lines() {
+            self.parse_line(&mln?);
+        }
+
+        Ok(())
+    }
+
     fn parse_line(&mut self, ln: &String) {
         let ps = ln.split('#').next().unwrap().trim();
 
@@ -252,12 +261,7 @@ fn main() -> io::Result<()> {
     };
 
     let mut prsr = Parse::new();
-
-    let rdr = BufReader::new(File::open(&fln)?);
-    for mln in rdr.lines() {
-        prsr.parse_line(&mln?);
-    }
-
+    prsr.parse_file(&fln)?;
     println!("{:?}", prsr.rule);
 
     Ok(())
