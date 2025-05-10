@@ -1,5 +1,7 @@
 use chrono::{ DateTime, TimeZone, NaiveDateTime, Utc };
 use chrono_tz::Tz;
+use once_cell::sync::Lazy;
+use regex::Regex;
 use std::collections::HashMap;
 use std::env;
 use std::fs::File;
@@ -20,19 +22,43 @@ impl InEffect {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum Case {
-    True,
     False,
+    True,
     Maybe,
     Both,
+    Invalid,
+}
+
+#[derive(Debug)]
+enum Op {
+    Eq,
+    Neq,
+    Lt,
+    Gt,
+    Lte,
+    Gte,
+    Unk,
 }
 
 #[derive(Debug)]
 struct Condition {
     key: String,
     val: String,
+    op: Op,
     cases: Vec<Case>,
+}
+
+impl Condition {
+    fn new(k: &str, v: &str, op: Op, cases: &Vec<Case>) -> Self {
+        Condition {
+            key: k.to_string(),
+            val: v.to_string(),
+            op: op,
+            cases: cases.to_vec(),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -72,6 +98,13 @@ struct Parse {
     rule: Rule,
 }
 
+static MATCH_ARR: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r",\s+").unwrap()
+});
+static MATCH_COND: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"(\w+)(=|!=|<=|>=|<|>)('[\w]+')\s*:\s*\[([\d\s,]+)\]").unwrap()
+});
+
 impl Parse {
     fn new() -> Self {
         Parse { state: ActiveSection::None, rule: Rule::new() }
@@ -97,8 +130,6 @@ impl Parse {
         } else {
             self.state = st;
         }
-
-        println!("state: {:?}", self.state);
     }
 
     fn parse_line_content(&mut self, ln: &String) {
@@ -119,9 +150,8 @@ impl Parse {
     }
 
     fn parse_line_in_effect(&mut self, ln: &String) {
-        let re = regex::Regex::new(r",\s+").unwrap();
         let mut ie = InEffect::new();
-        let parts: Vec<_> = re.split(ln)
+        let parts: Vec<_> = MATCH_ARR.split(ln)
             .map(|s| {
                 let v: Vec<_> = s.split_whitespace().collect();
 
@@ -154,6 +184,30 @@ impl Parse {
     }
 
     fn parse_line_cond(&mut self, ln: &String) {
+        if let Some(caps) = MATCH_COND.captures(ln) {
+            let k = caps.get(1).unwrap().as_str();
+            let op = match caps.get(2).unwrap().as_str() {
+                "=" => Op::Eq,
+                "!=" => Op::Neq,
+                "<" => Op::Lt,
+                "<=" => Op::Lte,
+                ">" => Op::Gt,
+                ">=" => Op::Gte,
+                _ => Op::Unk,
+            };
+            let v = caps.get(3).unwrap().as_str();
+            let scenarios: Vec<_> = MATCH_ARR.split(caps.get(4).unwrap().as_str()).map(|s| {
+                match s {
+                    "00" => Case::False,
+                    "01" => Case::True,
+                    "10" => Case::Maybe,
+                    "11" => Case::Both,
+                    _ => Case::Invalid,
+                }
+            }).collect();
+
+            self.rule.conditions.push(Condition::new(&k, &v, op, &scenarios));
+        }
     }
 
     fn parse_line_assert(&mut self, ln: &String) {
