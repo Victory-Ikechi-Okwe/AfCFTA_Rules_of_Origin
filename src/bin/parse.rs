@@ -208,25 +208,9 @@ impl Parse {
     fn parse_line_cond(&mut self, ln: &String) {
         if let Some(caps) = MATCH_COND.captures(ln) {
             let k = caps.get(1).unwrap().as_str();
-            let op = match caps.get(2).unwrap().as_str() {
-                "=" => Op::Eq,
-                "!=" => Op::Neq,
-                "<" => Op::Lt,
-                "<=" => Op::Lte,
-                ">" => Op::Gt,
-                ">=" => Op::Gte,
-                _ => Op::Unk,
-            };
+            let op = self.parse_op(caps.get(2).unwrap().as_str());
             let v = caps.get(3).unwrap().as_str();
-            let cases: Vec<_> = MATCH_ARR.split(caps.get(4).unwrap().as_str()).map(|s| {
-                match s {
-                    "00" => Case::False,
-                    "01" => Case::True,
-                    "10" => Case::Maybe,
-                    "11" => Case::Both,
-                    _ => Case::Invalid,
-                }
-            }).collect();
+            let cases = self.parse_cases(caps.get(4).unwrap().as_str());
 
             self.rule.conditions.push(Condition::new(&k, &v, op, &cases));
         }
@@ -236,17 +220,33 @@ impl Parse {
         if let Some(caps) = MATCH_ASSERT.captures(ln) {
             let k = caps.get(1).unwrap().as_str();
             let v = caps.get(2).unwrap().as_str();
-            let cases: Vec<_> = MATCH_ARR.split(caps.get(3).unwrap().as_str()).map(|s| {
-                match s {
-                    "00" => Case::False,
-                    "01" => Case::True,
-                    "10" => Case::Maybe,
-                    "11" => Case::Both,
-                    _ => Case::Invalid,
-                }
-            }).collect();
+            let cases = self.parse_cases(caps.get(3).unwrap().as_str());
 
             self.rule.assertions.push(Assertion::new(&k, &v, &cases));
+        }
+    }
+
+    fn parse_cases(&self, cs: &str) -> Vec<Case> {
+        MATCH_ARR.split(cs).map(|s| {
+            match s {
+                "00" => Case::False,
+                "01" => Case::True,
+                "10" => Case::Maybe,
+                "11" => Case::Both,
+                _ => Case::Invalid,
+            }
+        }).collect()
+    }
+
+    fn parse_op(&self, ops: &str) -> Op {
+        match ops {
+            "=" => Op::Eq,
+            "!=" => Op::Neq,
+            "<" => Op::Lt,
+            "<=" => Op::Lte,
+            ">" => Op::Gt,
+            ">=" => Op::Gte,
+            _ => Op::Unk,
         }
     }
 }
