@@ -1,98 +1,10 @@
-use chrono::{ DateTime, TimeZone, NaiveDateTime, Utc };
-use chrono_tz::Tz;
 use once_cell::sync::Lazy;
 use regex::Regex;
-use std::collections::HashMap;
 use std::env;
 use std::fs::File;
 use std::io::{ self, BufRead, BufReader };
-use std::str::FromStr;
 
-#[derive(Debug, Clone)]
-struct InEffect {
-    jurisdiction: Option<String>,
-    from: Option<chrono::DateTime<Utc>>,
-    to: Option<chrono::DateTime<Utc>>,
-    tz: Option<Tz>,
-}
-
-impl InEffect {
-    fn new() -> Self {
-        InEffect { jurisdiction: None, from: None, to: None, tz: None }
-    }
-}
-
-#[derive(Debug, Clone)]
-enum Case {
-    False,
-    True,
-    Maybe,
-    Both,
-    Invalid,
-}
-
-#[derive(Debug)]
-enum Op {
-    Eq,
-    Neq,
-    Lt,
-    Gt,
-    Lte,
-    Gte,
-    Unk,
-}
-
-#[derive(Debug)]
-struct Condition {
-    key: String,
-    val: String,
-    op: Op,
-    cases: Vec<Case>,
-}
-
-impl Condition {
-    fn new(k: &str, v: &str, op: Op, cases: &Vec<Case>) -> Self {
-        Condition {
-            key: k.to_string(),
-            val: v.to_string(),
-            op: op,
-            cases: cases.to_vec(),
-        }
-    }
-}
-
-#[derive(Debug)]
-struct AssertedValue(String, String);
-
-#[derive(Debug)]
-struct Assertion {
-    vals: Vec<AssertedValue>,
-    cases: Vec<Case>,
-}
-
-impl Assertion {
-    fn new(k: &str, v: &str, cases: &Vec<Case>) -> Self {
-        Assertion {
-            // only one value is supported right now
-            vals: vec![AssertedValue(k.to_string(), v.to_string())],
-            cases: cases.to_vec(),
-        }
-    }
-}
-
-#[derive(Debug)]
-struct Rule {
-    props: HashMap<String, String>,
-    in_effect: Vec<InEffect>,
-    conditions: Vec<Condition>,
-    assertions: Vec<Assertion>,
-}
-
-impl Rule {
-    fn new() -> Self {
-        Rule { props: HashMap::new(), in_effect: vec![], conditions: vec![], assertions: vec![] }
-    }
-}
+use rookie::rules::{ Assertion, Case, Condition, InEffect, Op, Rule };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum ActiveSection {
@@ -167,7 +79,7 @@ impl Parse {
     fn parse_line_prop(&mut self, ln: &String) {
         let parts: Vec<_> = ln.split_whitespace().collect();
         if parts.len() >= 2 {
-            self.rule.props.insert(parts[0].to_string(), parts[1].to_string());
+            self.rule.add_prop(parts[0], parts[1]);
         }
     }
 
@@ -186,23 +98,15 @@ impl Parse {
 
         for p in parts {
             match p.0 {
-                "IN" => ie.jurisdiction = Some(p.1.to_string()),
-                "FROM" => {
-                    let ndt = NaiveDateTime::parse_from_str(p.1, "%Y-%m-%dT%H:%M").expect("failed parse");
-                    ie.from = Some(DateTime::from_utc(ndt, Utc));
-                },
-                "TO" => {
-                    let ndt = NaiveDateTime::parse_from_str(p.1, "%Y-%m-%dT%H:%M").expect("failed parse");
-                    ie.to = Some(DateTime::from_utc(ndt, Utc));
-                },
-                "TZ" => {
-                    ie.tz = Some(Tz::from_str(p.1).expect("unknown tz"));
-                },
+                "IN" => ie.set_jurisdiction(p.1),
+                "FROM" => ie.set_from(p.1),
+                "TO" => ie.set_to(p.1),
+                "TZ" => ie.set_tz(p.1),
                 _ => {},
             }
         }
 
-        self.rule.in_effect.push(ie.clone());
+        self.rule.add_in_effect(&ie);
     }
 
     fn parse_line_cond(&mut self, ln: &String) {
@@ -212,7 +116,7 @@ impl Parse {
             let v = caps.get(3).unwrap().as_str();
             let cases = self.parse_cases(caps.get(4).unwrap().as_str());
 
-            self.rule.conditions.push(Condition::new(&k, &v, op, &cases));
+            self.rule.add_cond(Condition::new(&k, &v, op, &cases));
         }
     }
 
@@ -222,7 +126,7 @@ impl Parse {
             let v = caps.get(2).unwrap().as_str();
             let cases = self.parse_cases(caps.get(3).unwrap().as_str());
 
-            self.rule.assertions.push(Assertion::new(&k, &v, &cases));
+            self.rule.add_assert(Assertion::new(&k, &v, &cases));
         }
     }
 
