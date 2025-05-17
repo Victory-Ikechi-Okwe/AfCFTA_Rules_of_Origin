@@ -40,6 +40,8 @@ impl Parse {
             self.parse_line(&mln?);
         }
 
+        self.rule.refine();
+
         Ok(())
     }
 

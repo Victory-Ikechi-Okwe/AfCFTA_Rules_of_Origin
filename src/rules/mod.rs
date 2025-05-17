@@ -131,4 +131,8 @@ impl Rule {
     pub fn add_assert(&mut self, a: Assertion) {
         self.assertions.push(a.clone());
     }
+
+    pub fn refine(&mut self) {
+        self.props.entry(String::from("ID")).or_insert(uuid::Uuid::new_v4().hyphenated().to_string());
+    }
 }
