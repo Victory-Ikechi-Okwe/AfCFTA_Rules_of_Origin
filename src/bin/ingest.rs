@@ -159,55 +159,57 @@ fn store_rule(id: &String, rev: u64, o: &serde_json::Value) {
     }
 }
 
+use clap::Parser;
+
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    rules_fn: String,
+}
+
 // follows an update-or-insert model: if the rule has an 'id' property,
 // that's used to update/insert the rule. Otherwise, it's assumed the rule is new.
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    match args.as_slice() {
-        [_, path] => {
-            println!("path={:?}", path);
-            let f = std::fs::File::open(&path).expect("could not open file");
-            let o: serde_json::Value = serde_json::from_reader(f).expect("parse failure");
+    let args = Args::parse();
 
-            let id = match &o["properties"]["id"] {
-                serde_json::Value::String(s) => {
-                    s.to_string()
-                },
-                _ => {
-                    uuid::Uuid::new_v4().hyphenated().to_string()
-                }
-            };
+    println!("rules_fn={:?}", args.rules_fn);
+    let f = std::fs::File::open(&args.rules_fn).expect("could not open file");
+    let o: serde_json::Value = serde_json::from_reader(f).expect("parse failure");
 
-            let conn = open_db();
-            println!("id={:?}", id);
-
-            let rev = match find_latest_rev(&id) {
-                Some(r) => r + 1,
-                None => 0
-            };
-
-            match build_in_effect(&o["in_effect"]) {
-                Some(ie) => {
-                    store_in_effect(&conn, &id, rev, &ie);
-                }
-                None => {
-                    println!("no in effect");
-                }
-            }
-
-            match build_applicable(&o["input_conditions"]) {
-                Some(keys) => {
-                    store_keys(&conn, &id, rev, &keys);
-                }
-                None => {
-                    println!("no applicable");
-                }
-            }
-
-            store_rule(&id, rev, &o);
+    let id = match &o["properties"]["id"] {
+        serde_json::Value::String(s) => {
+            s.to_string()
         },
         _ => {
-            println!("invalid args");
+            uuid::Uuid::new_v4().hyphenated().to_string()
+        }
+    };
+
+    let conn = open_db();
+    println!("id={:?}", id);
+
+    let rev = match find_latest_rev(&id) {
+        Some(r) => r + 1,
+        None => 0
+    };
+
+    match build_in_effect(&o["in_effect"]) {
+        Some(ie) => {
+            store_in_effect(&conn, &id, rev, &ie);
+        }
+        None => {
+            println!("no in effect");
         }
     }
+
+    match build_applicable(&o["input_conditions"]) {
+        Some(keys) => {
+            store_keys(&conn, &id, rev, &keys);
+        }
+        None => {
+            println!("no applicable");
+        }
+    }
+
+    store_rule(&id, rev, &o);
 }
