@@ -3,6 +3,8 @@ use chrono_tz::Tz;
 use std::collections::HashMap;
 use std::str::FromStr;
 
+pub mod parser;
+
 #[derive(Debug, Clone)]
 pub struct InEffect {
     jurisdiction: Option<String>,
