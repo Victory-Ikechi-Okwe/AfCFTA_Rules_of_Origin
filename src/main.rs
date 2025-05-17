@@ -107,17 +107,17 @@ fn make_reaction_message(r: &Reaction) -> Message {
         r.doc]);
     debug!("json: {:?}", doc);
 
-    Message::Text(doc.to_string())
+    Message::Text(doc.to_string().into())
 }
 
 fn make_accepted_message(order: u64) -> Message {
     let v = serde_json::json!([order, "accepted"]);
-    Message::Text(v.to_string())
+    Message::Text(v.to_string().into())
 }
 
 fn make_rejected_message(order: u64) -> Message {
     let v = serde_json::json!([order, "rejected"]);
-    Message::Text(v.to_string())
+    Message::Text(v.to_string().into())
 }
 
 fn find_rule_by_args(args: &Vec<serde_json::Value>) -> Option<rule::Rule> {
@@ -294,9 +294,9 @@ fn process_cmd(
     }
 }
 
-fn process_text(t: String) -> Result<Action, Error> {
+fn process_text(t: &str) -> Result<Action, Error> {
     info!("text: {:?}", t);
-    let v: serde_json::Result<serde_json::Value> = serde_json::from_str(t.as_str());
+    let v: serde_json::Result<serde_json::Value> = serde_json::from_str(t);
     match v {
         Ok(serde_json::Value::Array(a)) => {
             match a.as_slice() {
@@ -325,7 +325,7 @@ fn process(
 ) -> bool {
     match msg {
         Some(Ok(Message::Text(t))) => {
-            let action = process_text(t);
+            let action = process_text(&t);
             debug!("parsed arction (action={:?})", action);
             match action {
                 Ok(Action { args, doc, act }) => {
