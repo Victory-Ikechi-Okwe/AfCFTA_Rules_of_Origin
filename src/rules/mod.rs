@@ -7,10 +7,10 @@ pub mod parser;
 
 #[derive(Debug, Clone)]
 pub struct InEffect {
-    jurisdiction: Option<String>,
-    from: Option<chrono::DateTime<Utc>>,
-    to: Option<chrono::DateTime<Utc>>,
-    tz: Option<Tz>,
+    pub jurisdiction: Option<String>,
+    pub from: Option<chrono::DateTime<Utc>>,
+    pub to: Option<chrono::DateTime<Utc>>,
+    pub tz: Option<Tz>,
 }
 
 fn dt_from_str(s: &str) -> Option<chrono::DateTime<Utc>> {
@@ -67,10 +67,10 @@ pub enum Op {
 
 #[derive(Clone, Debug)]
 pub struct Condition {
-    key: String,
-    val: String,
-    op: Op,
-    cases: Vec<Case>,
+    pub key: String,
+    pub val: String,
+    pub op: Op,
+    pub cases: Vec<Case>,
 }
 
 impl Condition {
@@ -106,8 +106,8 @@ impl Assertion {
 #[derive(Debug)]
 pub struct Rule {
     props: HashMap<String, String>,
-    in_effect: Vec<InEffect>,
-    conditions: Vec<Condition>,
+    pub in_effect: Vec<InEffect>,
+    pub conditions: Vec<Condition>,
     assertions: Vec<Assertion>,
 }
 
@@ -134,5 +134,13 @@ impl Rule {
 
     pub fn refine(&mut self) {
         self.props.entry(String::from("ID")).or_insert(uuid::Uuid::new_v4().hyphenated().to_string());
+    }
+
+    pub fn prop(&self, k: &str) -> Option<String> {
+        self.props.get(&String::from(k)).map(|v| v.clone())
+    }
+
+    pub fn id(&self) -> String {
+        self.prop("ID").expect("ID should have been generated")
     }
 }

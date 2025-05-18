@@ -1,9 +1,17 @@
+use chrono::{ DateTime, Utc };
+use chrono_tz::Tz;
 use log::*;
 use rusqlite::Connection;
 use glob::glob;
 use std::{
-    env,
+    io::{ self },
     path::PathBuf,
+};
+
+use rookie::rules::{
+    InEffect,
+    Rule,
+    parser,
 };
 
 fn open_db() -> Connection {
@@ -39,14 +47,6 @@ fn open_db() -> Connection {
     conn
 }
 
-#[derive(Debug, Clone)]
-struct InEffect {
-    pub loc: String,
-    pub from: String,
-    pub to: String,
-    pub tz: String,
-}
-
 fn store_in_effect(conn: &Connection, id: &String, rev: u64, in_effect: &Vec<InEffect>) {
     let mut stmt = conn.prepare("
       INSERT INTO in_effect (rule_id, version, jurisdiction, from_t, to_t, tz)
@@ -55,22 +55,13 @@ fn store_in_effect(conn: &Connection, id: &String, rev: u64, in_effect: &Vec<InE
         stmt.execute([
             id.clone(),
             rev.to_string(),
-            ie.loc.clone(),
-            ie.from.clone(),
-            ie.to.clone(),
-            ie.tz.clone(),
+            ie.jurisdiction.clone().unwrap_or_else(|| String::from("")).clone(),
+            ie.from.unwrap_or_else(|| DateTime::<Utc>::default()).to_string(),
+            ie.to.unwrap_or_else(|| DateTime::<Utc>::default()).to_string(),
+            ie.tz.unwrap_or_else(|| Tz::default()).to_string(),
         ]).unwrap();
 
         debug!("store: {:?} = {:?}", id, ie);
-    }
-}
-
-fn make_in_effect(o: &serde_json::Value) -> InEffect {
-    InEffect {
-        loc: o["in"].as_str().unwrap().to_string(),
-        from: o["from"].as_str().unwrap().to_string(),
-        to: o["to"].as_str().unwrap().to_string(),
-        tz: o["tz"].as_str().unwrap().to_string(),
     }
 }
 
@@ -109,17 +100,6 @@ fn find_latest_rev(id: &String) -> Option<u64> {
     }
 }
 
-fn build_in_effect(vals: &serde_json::Value) -> Option<Vec<InEffect>> {
-    match vals {
-        serde_json::Value::Array(ie) => {
-            Some(ie.iter().map(make_in_effect).collect())
-        },
-        _ => {
-            None
-        }
-    }
-}
-
 fn build_applicable(vals: &serde_json::Value) -> Option<Vec<String>> {
     match vals {
         serde_json::Value::Array(conds) => {
@@ -137,26 +117,13 @@ fn build_applicable(vals: &serde_json::Value) -> Option<Vec<String>> {
     }
 }
 
-fn store_rule(id: &String, rev: u64, o: &serde_json::Value) {
+fn store_rule(id: &String, rev: u64, rule_fn: &String) {
     let path = rule_dir(&id).join(format!("{:?}.json", rev));
     println!("rev={:?}; path={:?}", rev, path);
 
-    // TODO: design a binary format to retain, not JSON, which we need to parse
-    match std::fs::File::create(&path) {
-        Ok(f) => {
-            match serde_json::to_writer(f, &o) {
-                Ok(_) => {
-                    println!("wrote rule (rule={:?}", path);
-                },
-                Err(e) => {
-                    println!("failed to write rule (rule={:?}; e={:?})", path, e);
-                }
-            }
-        },
-        Err(e) => {
-            println!("failed to create file (rule={:?}; e={:?}", path, e);
-        }
-    }
+    println!("copy: fr={}; to={:?}", rule_fn, path);
+    std::fs::create_dir_all(path.parent().unwrap());
+    std::fs::copy(rule_fn, path);
 }
 
 use clap::Parser;
@@ -164,52 +131,38 @@ use clap::Parser;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    rules_fn: String,
+    rule_fn: String,
 }
 
 // follows an update-or-insert model: if the rule has an 'id' property,
 // that's used to update/insert the rule. Otherwise, it's assumed the rule is new.
-fn main() {
+fn main()  -> io::Result<()>{
     let args = Args::parse();
 
-    println!("rules_fn={:?}", args.rules_fn);
-    let f = std::fs::File::open(&args.rules_fn).expect("could not open file");
-    let o: serde_json::Value = serde_json::from_reader(f).expect("parse failure");
+    println!("rules_fn={:?}", args.rule_fn);
+    let mut prsr = parser::Parse::new();
+    prsr.parse_file(&args.rule_fn)?;
 
-    let id = match &o["properties"]["id"] {
-        serde_json::Value::String(s) => {
-            s.to_string()
-        },
-        _ => {
-            uuid::Uuid::new_v4().hyphenated().to_string()
-        }
-    };
-
-    let conn = open_db();
-    println!("id={:?}", id);
+    let rule = &prsr.rule;
+    let id = rule.id();
 
     let rev = match find_latest_rev(&id) {
         Some(r) => r + 1,
         None => 0
     };
 
-    match build_in_effect(&o["in_effect"]) {
-        Some(ie) => {
-            store_in_effect(&conn, &id, rev, &ie);
-        }
-        None => {
-            println!("no in effect");
-        }
-    }
+    println!("id={}; rev={}", id, rev);
 
-    match build_applicable(&o["input_conditions"]) {
-        Some(keys) => {
-            store_keys(&conn, &id, rev, &keys);
-        }
-        None => {
-            println!("no applicable");
-        }
-    }
+    let conn = open_db();
 
-    store_rule(&id, rev, &o);
+    store_in_effect(&conn, &id, rev, &rule.in_effect);
+
+    let keys: Vec<_> = rule.conditions.iter().map(|c| c.key.clone()).collect();
+    println!("keys={:?}", keys);
+
+    store_keys(&conn, &id, rev, &keys);
+
+    store_rule(&id, rev, &args.rule_fn);
+
+    Ok(())
 }
