@@ -11,12 +11,12 @@ struct Args {
     rules_fn: String,
 }
 
-fn main() -> io::Result<()> {
+fn main() {
     let args = Args::parse();
 
-    let mut prsr = parser::Parse::new();
-    prsr.parse_file(&args.rules_fn)?;
-    println!("{:?}", prsr.rule);
-
-    Ok(())
+    if let Some(rule) = parser::Parse::parse(&args.rules_fn) {
+        println!("{:?}", rule);
+    } else {
+        println!("parse failed");
+    }
 }

@@ -103,7 +103,7 @@ impl Assertion {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Rule {
     props: HashMap<String, String>,
     pub in_effect: Vec<InEffect>,

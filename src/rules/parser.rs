@@ -34,7 +34,15 @@ impl Parse {
         Parse { state: ActiveSection::None, rule: Rule::new() }
     }
 
-    pub fn parse_file(&mut self, fln: &String)  -> io::Result<()> {
+    pub fn parse(fln: &String) -> Option<Rule> {
+        let mut prsr = Parse::new();
+        match prsr.parse_file(fln) {
+            Ok(_) => Some(prsr.rule.clone()),
+            _ => None
+        }
+    }
+
+    pub fn parse_file(&mut self, fln: &String) -> io::Result<()> {
         let rdr = BufReader::new(File::open(fln)?);
         for mln in rdr.lines() {
             self.parse_line(&mln?);

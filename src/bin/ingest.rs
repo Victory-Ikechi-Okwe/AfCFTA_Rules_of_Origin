@@ -136,33 +136,30 @@ struct Args {
 
 // follows an update-or-insert model: if the rule has an 'id' property,
 // that's used to update/insert the rule. Otherwise, it's assumed the rule is new.
-fn main()  -> io::Result<()>{
+fn main() {
     let args = Args::parse();
 
     println!("rules_fn={:?}", args.rule_fn);
-    let mut prsr = parser::Parse::new();
-    prsr.parse_file(&args.rule_fn)?;
 
-    let rule = &prsr.rule;
-    let id = rule.id();
+    if let Some(rule) = parser::Parse::parse(&args.rule_fn) {
+        let id = rule.id();
 
-    let rev = match find_latest_rev(&id) {
-        Some(r) => r + 1,
-        None => 0
-    };
+        let rev = match find_latest_rev(&id) {
+            Some(r) => r + 1,
+            None => 0
+        };
 
-    println!("id={}; rev={}", id, rev);
+        println!("id={}; rev={}", id, rev);
 
-    let conn = open_db();
+        let conn = open_db();
 
-    store_in_effect(&conn, &id, rev, &rule.in_effect);
+        store_in_effect(&conn, &id, rev, &rule.in_effect);
 
-    let keys: Vec<_> = rule.conditions.iter().map(|c| c.key.clone()).collect();
-    println!("keys={:?}", keys);
+        let keys: Vec<_> = rule.conditions.iter().map(|c| c.key.clone()).collect();
+        println!("keys={:?}", keys);
 
-    store_keys(&conn, &id, rev, &keys);
+        store_keys(&conn, &id, rev, &keys);
 
-    store_rule(&id, rev, &args.rule_fn);
-
-    Ok(())
+        store_rule(&id, rev, &args.rule_fn);
+    }
 }
