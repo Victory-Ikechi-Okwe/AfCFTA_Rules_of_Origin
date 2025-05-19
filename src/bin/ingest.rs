@@ -86,7 +86,7 @@ fn extract_rev(p: &PathBuf) -> u64 {
 
 fn find_latest_rev(id: &String) -> Option<u64> {
     let dir = rule_dir(id);
-    let vers = dir.join("*.json");
+    let vers = dir.join("*.rule");
 
     println!("searching for rules: vers={:?}", vers);
     let latest = match glob(vers.to_str().unwrap()) {
@@ -118,7 +118,7 @@ fn build_applicable(vals: &serde_json::Value) -> Option<Vec<String>> {
 }
 
 fn store_rule(id: &String, rev: u64, rule_fn: &String) {
-    let path = rule_dir(&id).join(format!("{:?}.json", rev));
+    let path = rule_dir(&id).join(format!("{:?}.rule", rev));
     println!("rev={:?}; path={:?}", rev, path);
 
     println!("copy: fr={}; to={:?}", rule_fn, path);
