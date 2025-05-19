@@ -1,5 +1,7 @@
 use chrono::{ DateTime, NaiveDateTime, Utc };
 use chrono_tz::Tz;
+use once_cell::sync::Lazy;
+use regex::Regex;
 use std::collections::HashMap;
 use std::str::FromStr;
 
@@ -66,9 +68,43 @@ pub enum Op {
 }
 
 #[derive(Clone, Debug)]
+pub enum Value {
+    Ord(u64),
+    Str(String),
+    Invalid,
+}
+
+static MATCH_STR: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"^'(.+)'$").unwrap()
+});
+static MATCH_ORD: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"^(\d+)$").unwrap()
+});
+
+impl Value {
+    fn parse(v: &str) -> Value {
+        if let Some(caps) = MATCH_STR.captures(v) {
+            Value::Str(caps.get(1).unwrap().as_str().to_string())
+        } else if let Some(caps) = MATCH_ORD.captures(v) {
+            Value::Ord(caps.get(1).unwrap().as_str().parse::<u64>().unwrap())
+        } else {
+            Value::Invalid
+        }
+    }
+
+    pub fn matches(v: &Value, to_match: &String) -> bool {
+        match v {
+            Value::Str(s) => s == to_match,
+            Value::Ord(o) => *o == to_match.parse::<u64>().unwrap(),
+            Value::Invalid => false,
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct Condition {
     pub key: String,
-    pub val: String,
+    pub val: Value,
     pub op: Op,
     pub cases: Vec<Case>,
 }
@@ -77,7 +113,7 @@ impl Condition {
     pub fn new(k: &str, v: &str, op: Op, cases: &Vec<Case>) -> Self {
         Condition {
             key: k.to_string(),
-            val: v.to_string(),
+            val: Value::parse(v),
             op: op,
             cases: cases.to_vec(),
         }

@@ -7,6 +7,7 @@ use rookie::rules::{
     parser,
     Case,
     Condition,
+    Value,
 };
 
 fn rule_dir(id: &String) -> PathBuf {
@@ -36,7 +37,7 @@ fn eval_conds(conds: &Vec<Condition>, doc: &serde_json::Value) -> Vec<bool> {
     let result = conds.iter().fold(u64::MAX, |res_bits, cond| {
         let ac_val = fetch(doc, &cond.key);
         // TODO: the only opt is "eq" - add more???
-        let matches = ac_val == cond.val;
+        let matches = Value::matches(&cond.val, &ac_val);
 
         println!("ac_val={:?}; val={:?}; matches={:?}", ac_val, cond.val, matches);
         let case_bits = cond.cases.iter().enumerate().fold(0u64, |acc, (i, case)| {
