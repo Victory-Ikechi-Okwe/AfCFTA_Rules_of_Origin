@@ -92,8 +92,8 @@ impl Value {
         }
     }
 
-    pub fn matches(v: &Value, to_match: &String) -> bool {
-        match v {
+    pub fn matches(&self, to_match: &String) -> bool {
+        match self {
             Value::Str(s) => s == to_match,
             Value::Ord(o) => *o == to_match.parse::<u64>().unwrap(),
             Value::Invalid => false,
@@ -118,6 +118,11 @@ impl Condition {
             cases: cases.to_vec(),
         }
     }
+
+    pub fn matches(&self, to_match: &String) -> bool {
+        // TODO: doesn't consider self.op
+        self.val.matches(to_match)
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -125,8 +130,8 @@ struct AssertedValue(String, String);
 
 #[derive(Clone, Debug)]
 pub struct Assertion {
-    vals: Vec<AssertedValue>,
-    cases: Vec<Case>,
+    pub vals: Vec<AssertedValue>,
+    pub cases: Vec<Case>,
 }
 
 impl Assertion {
@@ -137,6 +142,13 @@ impl Assertion {
             cases: cases.to_vec(),
         }
     }
+
+    pub fn reduce(&self, idxs: &Vec<usize>) -> Assertion {
+        Assertion {
+            vals: self.vals.clone(),
+            cases: idxs.iter().map(|&i| self.cases[i].clone()).collect(),
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -144,7 +156,7 @@ pub struct Rule {
     props: HashMap<String, String>,
     pub in_effect: Vec<InEffect>,
     pub conditions: Vec<Condition>,
-    assertions: Vec<Assertion>,
+    pub assertions: Vec<Assertion>,
 }
 
 impl Rule {

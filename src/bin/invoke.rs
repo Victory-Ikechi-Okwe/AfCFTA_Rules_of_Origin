@@ -5,6 +5,7 @@ use std::{
 
 use rookie::rules::{
     parser,
+    Assertion,
     Case,
     Condition,
     Value,
@@ -32,12 +33,11 @@ fn fetch(doc: &serde_json::Value, k: &String) -> String {
     }
 }
 
-fn eval_conds(conds: &Vec<Condition>, doc: &serde_json::Value) -> Vec<bool> {
+fn eval_conds(conds: &Vec<Condition>, doc: &serde_json::Value) -> Vec<usize> {
     // TODO: this is limited to 64 scenarios, use BigUint
     let result = conds.iter().fold(u64::MAX, |res_bits, cond| {
         let ac_val = fetch(doc, &cond.key);
-        // TODO: the only opt is "eq" - add more???
-        let matches = Value::matches(&cond.val, &ac_val);
+        let matches = cond.matches(&ac_val);
 
         println!("ac_val={:?}; val={:?}; matches={:?}", ac_val, cond.val, matches);
         let case_bits = cond.cases.iter().enumerate().fold(0u64, |acc, (i, case)| {
@@ -60,7 +60,7 @@ fn eval_conds(conds: &Vec<Condition>, doc: &serde_json::Value) -> Vec<bool> {
     let len = conds.first().unwrap().cases.len();
     println!("result={:#b}; sc_count={:?}", result, len);
 
-    (0..len).map(|i| (result & (1 << i)) > 0).collect()
+    (0..len).filter(|i| (result & (1 << i)) > 0).collect()
 }
 
 fn single_run(path: &String, id: &String, rev: u64) {
@@ -70,9 +70,11 @@ fn single_run(path: &String, id: &String, rev: u64) {
     println!("single run: path={}; id={}; rev={}; rule_path={:?}", path, id, rev, rule_path);
     if let Some(rule) = parser::Parse::parse(&rule_path) {
         if let Some(doc) = parse_json_file(&doc_path) {
-            let e = eval_conds(&rule.conditions, &doc);
-            println!("eval={:?}", e);
-            // TODO: output assertions
+            let idxs = eval_conds(&rule.conditions, &doc);
+            println!("eval={:?}", idxs);
+
+            let asrts: Vec<_> = rule.assertions.iter().map(|asrt| asrt.reduce(&idxs)).collect();
+            println!("asserts={:?}", asrts);
         }
     }
 }

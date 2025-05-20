@@ -1,3 +1,4 @@
 {
-  "validation" : "inspected"
+  "validation" : "inspected",
+  "door_status" : "locked"
 }
