@@ -1,6 +1,5 @@
 use log::*;
-use rusqlite::Connection;
-use std::collections::HashMap;
+use rusqlite::{Connection};
 
 #[derive(Debug, Clone)]
 pub struct InEffect {
