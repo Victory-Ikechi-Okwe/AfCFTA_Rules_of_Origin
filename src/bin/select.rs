@@ -78,10 +78,7 @@ struct Context {
 
 fn load_context() -> Option<Context> {
     let f = std::fs::File::open("etc/contexts/default.json").expect("error");
-    match serde_json::from_reader(f) {
-        Ok(ctx) => Some(ctx),
-        Err(_) => None,
-    }
+    serde_json::from_reader(f).ok()
 }
 
 #[derive(Debug, Clone)]
@@ -93,7 +90,7 @@ struct Ref {
 
 fn find(ctx: Context, conn: Connection, keys: Vec<String>) -> rusqlite::Result<Vec<Ref>> {
     //    let joined_keys = keys.iter().map(|k| format!("'{}'", k)).collect::<Vec<_>>().join(", ");
-    let markers = vec!["?"].repeat(keys.len()).join(",");
+    let markers = ["?"].repeat(keys.len()).join(",");
     let q = format!("SELECT e.rule_id, e.version, a.key FROM in_effect AS e JOIN applicable AS a on e.rule_id=a.rule_id AND e.version=a.version WHERE e.jurisdiction=? AND e.tz=? AND a.key IN ({})", markers);
 
     let mut stmt = conn.prepare(&q).unwrap();
@@ -133,8 +130,7 @@ fn filter(refs: Vec<Ref>) -> Vec<Ref> {
             });
 
     refs.iter()
-        .filter(|r| max_vers.get(&r.id).map(|v| *v) == Some(&r.version))
-        .map(|r| r.clone())
+        .filter(|r| max_vers.get(&r.id).copied() == Some(&r.version)).cloned()
         .collect()
 }
 

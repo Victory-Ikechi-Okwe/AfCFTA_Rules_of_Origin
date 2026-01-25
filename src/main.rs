@@ -70,9 +70,9 @@ fn make_failed(order: u64, act: ActionT, m: String) -> Reaction {
     let doc = serde_json::json!({ "error" : m });
     Reaction {
         status: ReactionStatus::Failed,
-        doc: doc,
-        act: act,
-        order: order,
+        doc,
+        act,
+        order,
     }
 }
 
@@ -83,8 +83,8 @@ fn make_failed_with_str(order: u64, act: ActionT, m: &str) -> Reaction {
 fn make_ok(order: u64, act: ActionT, doc: &serde_json::Value) -> Reaction {
     Reaction {
         status: ReactionStatus::Ok,
-        order: order,
-        act: act,
+        order,
+        act,
         doc: doc.clone(),
     }
 }
@@ -196,7 +196,7 @@ fn do_store(
             let rule = rule::next_revision(&id);
             let resp = serde_json::json!({ "id" : rule.id, "revision" : rule.rev });
 
-            if rule.store(&d) {
+            if rule.store(d) {
                 match &d["in_effect"] {
                     serde_json::Value::Array(ie) => {
                         let vals: Vec<db::InEffect> = ie.iter().map(val_to_in_effect).collect();
@@ -211,14 +211,13 @@ fn do_store(
                     serde_json::Value::Array(conds) => {
                         let keys: Vec<String> = conds
                             .iter()
-                            .map(|v| match v {
+                            .filter_map(|v| match v {
                                 serde_json::Value::Object(m) => {
                                     debug!("map: {:?}", m);
                                     Some(m["expression"]["key"].as_str().unwrap().to_string())
                                 }
                                 _ => None,
                             })
-                            .flatten()
                             .collect();
 
                         debug!("keys: {:?}", keys);
@@ -250,7 +249,7 @@ fn do_get(
     match find_rule_by_args(args) {
         Some(rule) => {
             debug!("GET: found rule (rule={:?}; args={:?})", rule, args);
-            let f = match std::fs::File::open(&rule.path()) {
+            let f = match std::fs::File::open(rule.path()) {
                 Ok(f) => f,
                 _ => {
                     return make_failed(
@@ -330,7 +329,7 @@ fn process_text(t: &str) -> Result<Action, Error> {
             debug!("valid but not interested");
             Err(Error::Protocol)
         }
-        Err(err) => Err(Error::Json { err: err }),
+        Err(err) => Err(Error::Json { err }),
     }
 }
 

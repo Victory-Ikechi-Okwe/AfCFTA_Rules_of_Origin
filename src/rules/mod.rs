@@ -22,6 +22,12 @@ fn dt_from_str(s: &str) -> Option<chrono::DateTime<Utc>> {
     }
 }
 
+impl Default for InEffect {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl InEffect {
     pub fn new() -> Self {
         InEffect {
@@ -45,10 +51,7 @@ impl InEffect {
     }
 
     pub fn set_tz(&mut self, v: &str) {
-        self.tz = match Tz::from_str(v) {
-            Ok(tz) => Some(tz),
-            _ => None,
-        };
+        self.tz = Tz::from_str(v).ok();
     }
 }
 
@@ -115,7 +118,7 @@ impl Condition {
         Condition {
             key: k.to_string(),
             val: Value::parse(v),
-            op: op,
+            op,
             cases: cases.to_vec(),
         }
     }
@@ -160,6 +163,12 @@ pub struct Rule {
     pub assertions: Vec<Assertion>,
 }
 
+impl Default for Rule {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Rule {
     pub fn new() -> Self {
         Rule {
@@ -193,7 +202,7 @@ impl Rule {
     }
 
     pub fn prop(&self, k: &str) -> Option<String> {
-        self.props.get(&String::from(k)).map(|v| v.clone())
+        self.props.get(&String::from(k)).cloned()
     }
 
     pub fn id(&self) -> String {

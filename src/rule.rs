@@ -87,7 +87,7 @@ pub fn find_rule_by_rev(id: &String, rev: u64) -> Option<Rule> {
             path: path.clone(),
             dir: rule_dir(id).clone(),
             id: id.to_string(),
-            rev: rev,
+            rev,
         })
     } else {
         None
@@ -105,7 +105,7 @@ pub fn find_published_rule(id: &String) -> Option<Rule> {
             path: path.clone(),
             dir: rule_dir(id).clone(),
             id: id.to_string(),
-            rev: rev,
+            rev,
         })
     } else {
         None
@@ -122,15 +122,12 @@ pub fn find_latest_rule(id: &String) -> Option<Rule> {
         _ => None,
     };
 
-    match po {
-        Some(ref p) => Some(Rule {
+    po.as_ref().map(|p| Rule {
             path: p.clone(),
             dir: dir.clone(),
             id: id.clone(),
-            rev: extract_rev(&p),
-        }),
-        None => None,
-    }
+            rev: extract_rev(p),
+        })
 }
 
 pub fn next_revision(id: &String) -> Rule {
@@ -150,10 +147,7 @@ pub fn next_revision(id: &String) -> Rule {
         None => {
             let dir = rule_dir(id);
 
-            match std::fs::create_dir_all(&dir) {
-                Err(e) => debug!("failed to create store dir (dir={:?}, e={:?}", dir, e),
-                _ => {}
-            };
+            if let Err(e) = std::fs::create_dir_all(&dir) { debug!("failed to create store dir (dir={:?}, e={:?}", dir, e) };
 
             Rule {
                 path: dir.join("1.json"),

@@ -61,12 +61,12 @@ fn store_in_effect(conn: &Connection, id: &String, rev: u64, in_effect: &Vec<InE
                 .unwrap_or_else(|| String::from(""))
                 .clone(),
             ie.from
-                .unwrap_or_else(|| DateTime::<Utc>::default())
+                .unwrap_or_else(DateTime::<Utc>::default)
                 .to_string(),
             ie.to
-                .unwrap_or_else(|| DateTime::<Utc>::default())
+                .unwrap_or_else(DateTime::<Utc>::default)
                 .to_string(),
-            ie.tz.unwrap_or_else(|| Tz::default()).to_string(),
+            ie.tz.unwrap_or_else(Tz::default).to_string(),
         ])
         .unwrap();
 
@@ -106,10 +106,7 @@ fn find_latest_rev(id: &String) -> Option<u64> {
         _ => None,
     };
 
-    match latest {
-        Some(p) => Some(extract_rev(&p)),
-        None => None,
-    }
+    latest.map(|p| extract_rev(&p))
 }
 
 fn build_applicable(vals: &serde_json::Value) -> Option<Vec<String>> {
@@ -117,14 +114,13 @@ fn build_applicable(vals: &serde_json::Value) -> Option<Vec<String>> {
         serde_json::Value::Array(conds) => {
             let keys: Vec<String> = conds
                 .iter()
-                .map(|v| match v {
+                .filter_map(|v| match v {
                     serde_json::Value::Object(m) => {
                         debug!("map: {:?}", m);
                         Some(m["expression"]["key"].as_str().unwrap().to_string())
                     }
                     _ => None,
                 })
-                .flatten()
                 .collect();
 
             Some(keys)
@@ -134,7 +130,7 @@ fn build_applicable(vals: &serde_json::Value) -> Option<Vec<String>> {
 }
 
 fn store_rule(id: &String, rev: u64, rule_fn: &String) {
-    let path = rule_dir(&id).join(format!("{:?}.rule", rev));
+    let path = rule_dir(id).join(format!("{:?}.rule", rev));
     println!("rev={:?}; path={:?}", rev, path);
 
     println!("copy: fr={}; to={:?}", rule_fn, path);
