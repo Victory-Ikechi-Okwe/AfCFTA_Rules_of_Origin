@@ -2,6 +2,7 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use std::fs::File;
 use std::io::{ self, BufRead, BufReader };
+use log::{info, error, debug};
 
 use crate::rules::{ Assertion, Case, Condition, InEffect, Op, Rule };
 
@@ -38,7 +39,10 @@ impl Parse {
         let mut prsr = Parse::new();
         match prsr.parse_file(fln) {
             Ok(_) => Some(prsr.rule.clone()),
-            _ => None
+            Err(e) => {
+                error!("error parsing file: {:?}", e);
+                None
+            }
         }
     }
 
