@@ -1,6 +1,43 @@
 A Rust implementation of the rule-taker (RT) and rule-reserve (RR) design
 components of DWDS.
 
+# Development
+
+This is a Rust project.
+
+Conventional Rust toolchain can be used:
+
+```bash
+# build
+$ cargo build
+
+# run tests
+$ cargo test
+
+# compile and run one of the binaries
+$ cargo run --bin select
+```
+
+## nix
+
+nix can be used to setup a development environment with some required dependencies.
+
+Using nix-shell:
+
+```bash
+# uses nix/shell.nix
+# spawns a new shell (ctrl-d to exit back to original shell)
+$ nix-shell nix/shell.nix
+# new shell now has access to rust toolchain and supporting tooling
+```
+
+Using `nix develop` with `flake.nix`:
+```bash
+# uses flake.nix, which use nix/shell.nix
+$ nix develop
+# new shell now has access to rust toolchain and supporting tooling
+```
+
 # Design
 
 The programs in this project are intended to be the simplest possible
@@ -242,4 +279,3 @@ Storing a rule
 - `invoke`: Unimplemented
 - `ingest`: Requires extraction from `api`
 - `select`: Requires extraction from `api`
-
