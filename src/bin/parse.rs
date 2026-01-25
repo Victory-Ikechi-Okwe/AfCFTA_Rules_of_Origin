@@ -1,4 +1,3 @@
-
 use rookie::rules::{parser, parser::RulesetParser};
 
 use clap::Parser;

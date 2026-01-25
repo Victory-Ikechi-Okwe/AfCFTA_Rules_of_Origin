@@ -60,12 +60,8 @@ fn store_in_effect(conn: &Connection, id: &String, rev: u64, in_effect: &Vec<InE
                 .clone()
                 .unwrap_or_else(|| String::from(""))
                 .clone(),
-            ie.from
-                .unwrap_or_else(DateTime::<Utc>::default)
-                .to_string(),
-            ie.to
-                .unwrap_or_else(DateTime::<Utc>::default)
-                .to_string(),
+            ie.from.unwrap_or_else(DateTime::<Utc>::default).to_string(),
+            ie.to.unwrap_or_else(DateTime::<Utc>::default).to_string(),
             ie.tz.unwrap_or_else(Tz::default).to_string(),
         ])
         .unwrap();

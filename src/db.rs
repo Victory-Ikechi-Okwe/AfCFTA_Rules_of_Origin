@@ -1,5 +1,5 @@
 use log::*;
-use rusqlite::{Connection};
+use rusqlite::Connection;
 
 #[derive(Debug, Clone)]
 pub struct InEffect {

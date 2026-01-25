@@ -130,7 +130,8 @@ fn filter(refs: Vec<Ref>) -> Vec<Ref> {
             });
 
     refs.iter()
-        .filter(|r| max_vers.get(&r.id).copied() == Some(&r.version)).cloned()
+        .filter(|r| max_vers.get(&r.id).copied() == Some(&r.version))
+        .cloned()
         .collect()
 }
 
