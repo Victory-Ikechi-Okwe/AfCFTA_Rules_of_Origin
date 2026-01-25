@@ -1,5 +1,5 @@
 use std::error::Error;
-use std::io::{self, Write};
+use std::io::Write;
 use std::path::PathBuf;
 use tokio;
 use tokio::signal::unix::{signal, SignalKind};

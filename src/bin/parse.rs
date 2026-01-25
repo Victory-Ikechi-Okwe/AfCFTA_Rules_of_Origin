@@ -1,5 +1,3 @@
-use std::env;
-use std::io::{self};
 
 use rookie::rules::{parser, parser::RulesetParser};
 

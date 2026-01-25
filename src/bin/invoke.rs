@@ -3,7 +3,7 @@ use std::{
     path::PathBuf,
 };
 
-use rookie::rules::{parser, parser::RulesetParser, Assertion, Case, Condition, Value};
+use rookie::rules::{parser, parser::RulesetParser, Case, Condition};
 
 fn rule_dir(id: &String) -> PathBuf {
     [".", "data", "rules", id].iter().collect()

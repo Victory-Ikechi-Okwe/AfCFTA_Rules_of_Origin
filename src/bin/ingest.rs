@@ -1,15 +1,12 @@
 use chrono::{DateTime, Utc};
 use chrono_tz::Tz;
 use glob::glob;
-use log::{debug, error, info};
+use log::{debug, info};
 use rusqlite::Connection;
-use std::{
-    io::{self},
-    path::PathBuf,
-};
+use std::path::PathBuf;
 
 use clap::Parser;
-use rookie::rules::{parser, parser::RulesetParser, InEffect, Rule};
+use rookie::rules::{parser, parser::RulesetParser, InEffect};
 use std::process::ExitCode;
 
 fn open_db() -> Connection {
