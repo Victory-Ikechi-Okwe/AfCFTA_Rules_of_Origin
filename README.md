@@ -18,6 +18,17 @@ $ cargo test
 $ cargo run --bin select
 ```
 
+## Makefile
+
+A Makefile is available with conventional targets:
+
+```bash
+$ make build # run cargo build
+$ make test  # run cargo test (unit tests) and bats (integration tests)
+$ make check # run linters
+$ make install # install binaries
+```
+
 ## nix
 
 nix can be used to setup a development environment with some required dependencies.
@@ -37,6 +48,33 @@ Using `nix develop` with `flake.nix`:
 $ nix develop
 # new shell now has access to rust toolchain and supporting tooling
 ```
+
+## tests
+
+### Unit tests
+
+Rust unit tests can be run using `cargo test`:
+
+```bash
+$ cargo test
+```
+
+### Integration tests
+
+Integration tests, under [test/bats](./test/bats/), use BATS (Bash Automated Testing System).
+
+```bash
+$ bats test/bats/*.bats
+```
+
+Or using the [Makefile](./Makefile):
+
+```bash
+$ make test-integration
+```
+
+See [nix shell](./shell.nix) for the testing dependencies.
+Or install `bats` using your preferred package manager, or from source.
 
 # Design
 

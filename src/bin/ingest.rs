@@ -1,6 +1,6 @@
 use chrono::{ DateTime, Utc };
 use chrono_tz::Tz;
-use log::*;
+use log::{ info, debug, error };
 use rusqlite::Connection;
 use glob::glob;
 use std::{
@@ -13,6 +13,9 @@ use rookie::rules::{
     Rule,
     parser,
 };
+use std::process::ExitCode;
+use clap::Parser;
+
 
 fn open_db() -> Connection {
     let should_init = !std::path::Path::new("data/rules.db").exists();
@@ -126,8 +129,6 @@ fn store_rule(id: &String, rev: u64, rule_fn: &String) {
     std::fs::copy(rule_fn, path);
 }
 
-use clap::Parser;
-
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
@@ -136,8 +137,20 @@ struct Args {
 
 // follows an update-or-insert model: if the rule has an 'id' property,
 // that's used to update/insert the rule. Otherwise, it's assumed the rule is new.
-fn main() {
+fn main() -> ExitCode {
+    {
+        use env_logger::{Builder, Target};
+        use log::LevelFilter;
+
+        Builder::from_default_env()
+            .target(Target::Stderr)
+            .filter_level(LevelFilter::Debug)
+            .init();
+        info!("Starting");
+    }
+
     let args = Args::parse();
+    info!("Ingesting file {}", args.rule_fn);
 
     println!("rules_fn={:?}", args.rule_fn);
 
@@ -161,5 +174,8 @@ fn main() {
         store_keys(&conn, &id, rev, &keys);
 
         store_rule(&id, rev, &args.rule_fn);
+        ExitCode::from(0)
+    } else {
+        ExitCode::from(1)
     }
 }
