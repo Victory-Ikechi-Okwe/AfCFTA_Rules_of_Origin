@@ -3,7 +3,7 @@ use std::{
     path::PathBuf,
 };
 
-use rookie::rules::{parser, parser::RulesetParser, Assertion, Case, Condition, Value};
+use rookie::rules::{parser, parser::RulesetParser, Case, Condition};
 
 fn rule_dir(id: &String) -> PathBuf {
     [".", "data", "rules", id].iter().collect()
@@ -11,10 +11,7 @@ fn rule_dir(id: &String) -> PathBuf {
 
 fn parse_json_file(path: &PathBuf) -> Option<serde_json::Value> {
     let f = std::fs::File::open(path).expect("could not open file");
-    match serde_json::from_reader(f) {
-        Result::Ok(o) => Some(o),
-        Err(_) => None,
-    }
+    serde_json::from_reader(f).ok()
 }
 
 fn fetch(doc: &serde_json::Value, k: &String) -> String {
@@ -66,7 +63,7 @@ fn eval_conds(conds: &Vec<Condition>, doc: &serde_json::Value) -> Vec<usize> {
 
 fn single_run(path: &String, id: &String, rev: u64) {
     let doc_path = PathBuf::from(path);
-    let rule_path = rule_dir(&id)
+    let rule_path = rule_dir(id)
         .join(format!("{:?}.rule", rev))
         .display()
         .to_string();

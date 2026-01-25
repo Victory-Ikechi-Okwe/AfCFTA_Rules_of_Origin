@@ -1,11 +1,8 @@
 use std::error::Error;
-use std::io::{self, Write};
+use std::io::Write;
 use std::path::PathBuf;
-use tokio;
 use tokio::signal::unix::{signal, SignalKind};
 use tokio::time::{sleep, Duration};
-
-
 
 // Create a custom writer that writes to both file and stdout
 struct MultiWriter {
@@ -26,7 +23,6 @@ impl Write for MultiWriter {
         Ok(())
     }
 }
-
 
 async fn work() {
     sleep(Duration::from_secs(10)).await;
@@ -95,8 +91,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         if foreground {
             daemon_main().await;
             Ok(())
-        }
-        else {
+        } else {
             use daemonize::Daemonize;
             let run_dir = PathBuf::from("var/run/daemon");
             std::fs::create_dir_all(&run_dir);

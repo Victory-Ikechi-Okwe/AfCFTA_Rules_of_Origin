@@ -84,6 +84,12 @@ static MATCH_COND: Lazy<Regex> =
 static MATCH_ASSERT: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(\w+):=('[\w_]+'):\s*\[([\d\s,]+)\]").unwrap());
 
+impl Default for IORParser {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl IORParser {
     pub fn new() -> Self {
         IORParser {
@@ -106,7 +112,7 @@ impl IORParser {
     fn parse_line(&mut self, ln: &String) {
         let ps = ln.split('#').next().unwrap().trim();
 
-        if ps.len() == 0 {
+        if ps.is_empty() {
             return;
         }
 
@@ -177,7 +183,7 @@ impl IORParser {
             let v = caps.get(3).unwrap().as_str();
             let cases = self.parse_cases(caps.get(4).unwrap().as_str());
 
-            self.rule.add_cond(Condition::new(&k, &v, op, &cases));
+            self.rule.add_cond(Condition::new(k, v, op, &cases));
         }
     }
 
@@ -187,7 +193,7 @@ impl IORParser {
             let v = caps.get(2).unwrap().as_str();
             let cases = self.parse_cases(caps.get(3).unwrap().as_str());
 
-            self.rule.add_assert(Assertion::new(&k, &v, &cases));
+            self.rule.add_assert(Assertion::new(k, v, &cases));
         }
     }
 
