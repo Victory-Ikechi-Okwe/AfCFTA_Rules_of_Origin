@@ -5,6 +5,29 @@ use tokio;
 use tokio::signal::unix::{signal, SignalKind};
 use tokio::time::{sleep, Duration};
 
+
+
+// Create a custom writer that writes to both file and stdout
+struct MultiWriter {
+    file: std::fs::File,
+    stdout: std::io::Stderr,
+}
+
+impl Write for MultiWriter {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        self.file.write_all(buf)?;
+        self.stdout.write_all(buf)?;
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        self.file.flush()?;
+        self.stdout.flush()?;
+        Ok(())
+    }
+}
+
+
 async fn work() {
     sleep(Duration::from_secs(10)).await;
     log::info!("doing work")
@@ -36,11 +59,9 @@ async fn daemon_main() -> Result<(), Box<dyn Error>> {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    // Create necessary directories with absolute paths
-    let run_dir = PathBuf::from("var/run/daemon");
+    // Create necessary directories
     let log_dir = PathBuf::from("var/log/daemon");
-    std::fs::create_dir_all(&run_dir)?;
-    std::fs::create_dir_all(&log_dir)?;
+    std::fs::create_dir_all(&log_dir);
 
     // Set up logging with absolute paths
     {
@@ -51,27 +72,46 @@ async fn main() -> Result<(), Box<dyn Error>> {
             .append(true)
             .open(log_dir.join("daemon.log"))?;
 
+        let multi_writer = MultiWriter {
+            file: log_file,
+            stdout: std::io::stderr(),
+        };
+
         Builder::from_default_env()
-            .target(Target::Pipe(Box::new(log_file)))
+            .target(Target::Pipe(Box::new(multi_writer)))
             .filter_level(LevelFilter::Debug)
             .init();
+        log::debug!("logger initialized with log dir {:?}", &log_dir);
     }
 
     log::info!("starting");
 
     #[cfg(unix)]
     {
-        use daemonize::Daemonize;
-        let d = Daemonize::new()
-            .pid_file("var/run/daemon/daemon.pid")
-            .chown_pid_file(true)
-            .working_directory("var/run/daemon");
+        use std::env;
+        let args: Vec<String> = env::args().collect();
+        let foreground = args.contains(&"--foreground".to_string());
 
-        match d.start() {
-            Ok(_) => daemon_main().await,
-            Err(e) => {
-                log::error!("error daemonizing: {}", e);
-                Ok(())
+        if foreground {
+            daemon_main().await;
+            Ok(())
+        }
+        else {
+            use daemonize::Daemonize;
+            let run_dir = PathBuf::from("var/run/daemon");
+            std::fs::create_dir_all(&run_dir);
+            log::debug!("run dir is {:?}", &run_dir);
+            log::debug!("Daemonizing");
+            let d = Daemonize::new()
+                .working_directory(&run_dir)
+                .pid_file("daemon.pid")
+                .chown_pid_file(true);
+            match d.start() {
+                Ok(_) => daemon_main().await,
+                Err(e) => {
+                    log::error!("error daemonizing: {}", e);
+                    Ok(())
+                }
             }
         }
     }
