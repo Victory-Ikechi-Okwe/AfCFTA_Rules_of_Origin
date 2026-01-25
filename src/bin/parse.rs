@@ -1,7 +1,7 @@
 use std::env;
-use std::io::{ self };
+use std::io::{self};
 
-use rookie::rules::parser;
+use rookie::rules::{parser, parser::RulesetParser};
 
 use clap::Parser;
 

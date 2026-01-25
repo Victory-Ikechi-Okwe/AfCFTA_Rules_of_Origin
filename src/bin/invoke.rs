@@ -1,15 +1,9 @@
 use std::{
-    io::{ self },
+    io::{self},
     path::PathBuf,
 };
 
-use rookie::rules::{
-    parser,
-    Assertion,
-    Case,
-    Condition,
-    Value,
-};
+use rookie::rules::{parser, parser::RulesetParser, Assertion, Case, Condition, Value};
 
 fn rule_dir(id: &String) -> PathBuf {
     [".", "data", "rules", id].iter().collect()
@@ -39,7 +33,10 @@ fn eval_conds(conds: &Vec<Condition>, doc: &serde_json::Value) -> Vec<usize> {
         let ac_val = fetch(doc, &cond.key);
         let matches = cond.matches(&ac_val);
 
-        println!("ac_val={:?}; val={:?}; matches={:?}", ac_val, cond.val, matches);
+        println!(
+            "ac_val={:?}; val={:?}; matches={:?}",
+            ac_val, cond.val, matches
+        );
         let case_bits = cond.cases.iter().enumerate().fold(0u64, |acc, (i, case)| {
             let b = match case {
                 Case::False => !matches,
@@ -51,7 +48,11 @@ fn eval_conds(conds: &Vec<Condition>, doc: &serde_json::Value) -> Vec<usize> {
                 Case::Invalid => false,
             };
 
-            if b { acc | 1 << i } else { acc }
+            if b {
+                acc | 1 << i
+            } else {
+                acc
+            }
         });
 
         res_bits & case_bits
@@ -65,15 +66,25 @@ fn eval_conds(conds: &Vec<Condition>, doc: &serde_json::Value) -> Vec<usize> {
 
 fn single_run(path: &String, id: &String, rev: u64) {
     let doc_path = PathBuf::from(path);
-    let rule_path = rule_dir(&id).join(format!("{:?}.rule", rev)).display().to_string();
+    let rule_path = rule_dir(&id)
+        .join(format!("{:?}.rule", rev))
+        .display()
+        .to_string();
 
-    println!("single run: path={}; id={}; rev={}; rule_path={:?}", path, id, rev, rule_path);
+    println!(
+        "single run: path={}; id={}; rev={}; rule_path={:?}",
+        path, id, rev, rule_path
+    );
     if let Some(rule) = parser::Parse::parse(&rule_path) {
         if let Some(doc) = parse_json_file(&doc_path) {
             let idxs = eval_conds(&rule.conditions, &doc);
             println!("eval={:?}", idxs);
 
-            let asrts: Vec<_> = rule.assertions.iter().map(|asrt| asrt.reduce(&idxs)).collect();
+            let asrts: Vec<_> = rule
+                .assertions
+                .iter()
+                .map(|asrt| asrt.reduce(&idxs))
+                .collect();
             println!("asserts={:?}", asrts);
         }
     }

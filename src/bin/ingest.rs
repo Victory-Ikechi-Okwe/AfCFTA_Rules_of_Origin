@@ -1,21 +1,16 @@
-use chrono::{ DateTime, Utc };
+use chrono::{DateTime, Utc};
 use chrono_tz::Tz;
-use log::{ info, debug, error };
-use rusqlite::Connection;
 use glob::glob;
+use log::{debug, error, info};
+use rusqlite::Connection;
 use std::{
-    io::{ self },
+    io::{self},
     path::PathBuf,
 };
 
-use rookie::rules::{
-    InEffect,
-    Rule,
-    parser,
-};
-use std::process::ExitCode;
 use clap::Parser;
-
+use rookie::rules::{parser, parser::RulesetParser, InEffect, Rule};
+use std::process::ExitCode;
 
 fn open_db() -> Connection {
     let should_init = !std::path::Path::new("data/rules.db").exists();
@@ -28,7 +23,7 @@ fn open_db() -> Connection {
 
     if should_init {
         conn.execute_batch(
-          "BEGIN;
+            "BEGIN;
            CREATE TABLE IF NOT EXISTS in_effect (
                  id           INTEGER PRIMARY KEY AUTOINCREMENT,
                  rule_id      text,
@@ -44,34 +39,51 @@ fn open_db() -> Connection {
                  version text,
                  key     text
            );
-           COMMIT;").unwrap();
+           COMMIT;",
+        )
+        .unwrap();
     }
 
     conn
 }
 
 fn store_in_effect(conn: &Connection, id: &String, rev: u64, in_effect: &Vec<InEffect>) {
-    let mut stmt = conn.prepare("
+    let mut stmt = conn
+        .prepare(
+            "
       INSERT INTO in_effect (rule_id, version, jurisdiction, from_t, to_t, tz)
-                     VALUES (?1, ?2, ?3, ?4, ?5, ?6)").unwrap();
+                     VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+        )
+        .unwrap();
     for ie in in_effect.iter() {
         stmt.execute([
             id.clone(),
             rev.to_string(),
-            ie.jurisdiction.clone().unwrap_or_else(|| String::from("")).clone(),
-            ie.from.unwrap_or_else(|| DateTime::<Utc>::default()).to_string(),
-            ie.to.unwrap_or_else(|| DateTime::<Utc>::default()).to_string(),
+            ie.jurisdiction
+                .clone()
+                .unwrap_or_else(|| String::from(""))
+                .clone(),
+            ie.from
+                .unwrap_or_else(|| DateTime::<Utc>::default())
+                .to_string(),
+            ie.to
+                .unwrap_or_else(|| DateTime::<Utc>::default())
+                .to_string(),
             ie.tz.unwrap_or_else(|| Tz::default()).to_string(),
-        ]).unwrap();
+        ])
+        .unwrap();
 
         debug!("store: {:?} = {:?}", id, ie);
     }
 }
 
 pub fn store_keys(conn: &Connection, id: &String, rev: u64, keys: &Vec<String>) -> bool {
-    let mut stmt = conn.prepare("INSERT INTO applicable (rule_id, version, key) VALUES (?1, ?2, ?3)").unwrap();
+    let mut stmt = conn
+        .prepare("INSERT INTO applicable (rule_id, version, key) VALUES (?1, ?2, ?3)")
+        .unwrap();
     for k in keys.iter() {
-        stmt.execute([id.clone(), rev.to_string(), k.clone()]).unwrap();
+        stmt.execute([id.clone(), rev.to_string(), k.clone()])
+            .unwrap();
     }
     true
 }
@@ -83,7 +95,7 @@ fn rule_dir(id: &String) -> PathBuf {
 fn extract_rev(p: &PathBuf) -> u64 {
     match p.as_path().file_stem() {
         None => 0,
-        Some(st) => { st.to_str().unwrap().parse().unwrap() }
+        Some(st) => st.to_str().unwrap().parse().unwrap(),
     }
 }
 
@@ -94,29 +106,33 @@ fn find_latest_rev(id: &String) -> Option<u64> {
     println!("searching for rules: vers={:?}", vers);
     let latest = match glob(vers.to_str().unwrap()) {
         Ok(it) => it.filter_map(|p| p.ok()).max_by_key(extract_rev),
-        _ => None
+        _ => None,
     };
 
     match latest {
         Some(p) => Some(extract_rev(&p)),
-        None => None
+        None => None,
     }
 }
 
 fn build_applicable(vals: &serde_json::Value) -> Option<Vec<String>> {
     match vals {
         serde_json::Value::Array(conds) => {
-            let keys: Vec<String> = conds.iter().map(|v| match v {
-                serde_json::Value::Object(m) => {
-                    debug!("map: {:?}", m);
-                    Some(m["expression"]["key"].as_str().unwrap().to_string())
-                },
-                _ => None
-            }).flatten().collect();
+            let keys: Vec<String> = conds
+                .iter()
+                .map(|v| match v {
+                    serde_json::Value::Object(m) => {
+                        debug!("map: {:?}", m);
+                        Some(m["expression"]["key"].as_str().unwrap().to_string())
+                    }
+                    _ => None,
+                })
+                .flatten()
+                .collect();
 
             Some(keys)
-        },
-        _ => None
+        }
+        _ => None,
     }
 }
 
@@ -159,7 +175,7 @@ fn main() -> ExitCode {
 
         let rev = match find_latest_rev(&id) {
             Some(r) => r + 1,
-            None => 0
+            None => 0,
         };
 
         println!("id={}; rev={}", id, rev);
