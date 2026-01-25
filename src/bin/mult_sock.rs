@@ -1,14 +1,14 @@
-use tokio::{
-    self,
-    io::{AsyncReadExt, AsyncWriteExt},
-    net::UnixListener,
-    net::UnixStream,
-    net::unix::OwnedWriteHalf,
-    sync::mpsc,
-};
 use std::error::Error;
 use std::path::Path;
 use std::process;
+use tokio::{
+    self,
+    io::{AsyncReadExt, AsyncWriteExt},
+    net::unix::OwnedWriteHalf,
+    net::UnixListener,
+    net::UnixStream,
+    sync::mpsc,
+};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -71,10 +71,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 }
 
 // Handle a single client connection
-async fn handle_connection(
-    stream: UnixStream,
-    tx: mpsc::Sender<Vec<u8>>,
-) {
+async fn handle_connection(stream: UnixStream, tx: mpsc::Sender<Vec<u8>>) {
     let (mut read_half, _) = stream.into_split();
     let mut buffer = [0u8; 1024];
 
@@ -104,10 +101,7 @@ async fn handle_connection(
 }
 
 // Handle writing to the output socket
-async fn handle_writer(
-    mut write_half: OwnedWriteHalf,
-    mut rx: mpsc::Receiver<Vec<u8>>,
-) {
+async fn handle_writer(mut write_half: OwnedWriteHalf, mut rx: mpsc::Receiver<Vec<u8>>) {
     while let Some(data) = rx.recv().await {
         if let Err(e) = write_half.write_all(&data).await {
             eprintln!("Failed to write to socket: {}", e);

@@ -1,5 +1,5 @@
 use log::*;
-use rusqlite::{Connection};
+use rusqlite::Connection;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
@@ -16,7 +16,7 @@ fn open_db() -> Connection {
 
     if should_init {
         conn.execute_batch(
-          "BEGIN;
+            "BEGIN;
            CREATE TABLE IF NOT EXISTS in_effect (
                  id           INTEGER PRIMARY KEY AUTOINCREMENT,
                  rule_id      text,
@@ -32,7 +32,9 @@ fn open_db() -> Connection {
                  version text,
                  key     text
            );
-           COMMIT;").unwrap();
+           COMMIT;",
+        )
+        .unwrap();
     }
 
     conn
@@ -40,20 +42,27 @@ fn open_db() -> Connection {
 
 pub fn store_keys(id: &String, keys: &Vec<String>) -> bool {
     let conn = open_db();
-    let mut stmt = conn.prepare("INSERT INTO applicable (rule_id, version, key) VALUES (?1, ?2, ?3)").unwrap();
+    let mut stmt = conn
+        .prepare("INSERT INTO applicable (rule_id, version, key) VALUES (?1, ?2, ?3)")
+        .unwrap();
     for k in keys.iter() {
-        stmt.execute([id.clone(), String::from(""), k.clone()]).unwrap();
+        stmt.execute([id.clone(), String::from(""), k.clone()])
+            .unwrap();
     }
     true
 }
 
 pub fn store(id: &String, effects: &Vec<InEffect>) -> bool {
-//    let conn = Connection::open("data/rules.db")?;
+    //    let conn = Connection::open("data/rules.db")?;
     let conn = open_db();
 
-    let mut stmt = conn.prepare("
+    let mut stmt = conn
+        .prepare(
+            "
       INSERT INTO in_effect (rule_id, version, jurisdiction, from_t, to_t, tz)
-                     VALUES (?1, ?2, ?3, ?4, ?5, ?6)").unwrap();
+                     VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+        )
+        .unwrap();
     for ie in effects.iter() {
         stmt.execute([
             id.clone(),
@@ -62,7 +71,8 @@ pub fn store(id: &String, effects: &Vec<InEffect>) -> bool {
             ie.from.clone(),
             ie.to.clone(),
             ie.tz.clone(),
-        ]).unwrap();
+        ])
+        .unwrap();
 
         debug!("store: {:?} = {:?}", id, ie);
     }

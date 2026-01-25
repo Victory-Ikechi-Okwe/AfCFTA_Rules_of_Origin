@@ -1,4 +1,4 @@
-use chrono::{ DateTime, NaiveDateTime, Utc };
+use chrono::{DateTime, NaiveDateTime, Utc};
 use chrono_tz::Tz;
 use once_cell::sync::Lazy;
 use regex::Regex;
@@ -24,7 +24,12 @@ fn dt_from_str(s: &str) -> Option<chrono::DateTime<Utc>> {
 
 impl InEffect {
     pub fn new() -> Self {
-        InEffect { jurisdiction: None, from: None, to: None, tz: None }
+        InEffect {
+            jurisdiction: None,
+            from: None,
+            to: None,
+            tz: None,
+        }
     }
 
     pub fn set_jurisdiction(&mut self, v: &str) {
@@ -74,12 +79,8 @@ pub enum Value {
     Invalid,
 }
 
-static MATCH_STR: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^'(.+)'$").unwrap()
-});
-static MATCH_ORD: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^(\d+)$").unwrap()
-});
+static MATCH_STR: Lazy<Regex> = Lazy::new(|| Regex::new(r"^'(.+)'$").unwrap());
+static MATCH_ORD: Lazy<Regex> = Lazy::new(|| Regex::new(r"^(\d+)$").unwrap());
 
 impl Value {
     fn parse(v: &str) -> Value {
@@ -161,7 +162,12 @@ pub struct Rule {
 
 impl Rule {
     pub fn new() -> Self {
-        Rule { props: HashMap::new(), in_effect: vec![], conditions: vec![], assertions: vec![] }
+        Rule {
+            props: HashMap::new(),
+            in_effect: vec![],
+            conditions: vec![],
+            assertions: vec![],
+        }
     }
 
     pub fn add_in_effect(&mut self, ie: &InEffect) {
@@ -181,7 +187,9 @@ impl Rule {
     }
 
     pub fn refine(&mut self) {
-        self.props.entry(String::from("ID")).or_insert(uuid::Uuid::new_v4().hyphenated().to_string());
+        self.props
+            .entry(String::from("ID"))
+            .or_insert(uuid::Uuid::new_v4().hyphenated().to_string());
     }
 
     pub fn prop(&self, k: &str) -> Option<String> {
