@@ -1,0 +1,80 @@
+{
+  "id": "wholly_obtained_rule_full_sentences",
+  "version": 0,
+  "when": {
+    "This Product was produced within the territory of an AfCFTA State Party": {
+      "A": "01",
+      "B": "01",
+      "C": "01",
+      "D": "01"
+    },
+    "This Product is being exported to an AfCFTA State Party": {
+      "A": "01",
+      "B": "01",
+      "C": "01",
+      "D": "01"
+    },
+    "This Product is classified as a type of Mineral": {
+      "A": "01",
+      "B": "01",
+      "C": "01",
+      "D": "01"
+    },
+    "This Product was extracted from the Ground": {
+      "A": "01",
+      "B": "00",
+      "C": "00",
+      "D": "11"
+    },
+    "This Product was extracted from the Sea Bed": {
+      "A": "00",
+      "B": "01",
+      "C": "00",
+      "D": "11"
+    },
+    "This Product was extracted from below the Sea Bed ": {
+      "A": "00",
+      "B": "00",
+      "C": "01",
+      "D": "11"
+    },
+    "This Product was produced in accordance with the United Nation Convention on the Law of the Sea": {
+      "A": "01",
+      "B": "01",
+      "C": "01",
+      "D": "10"
+    }
+  },
+  "then": {
+    "This Product is considered wholly obtained in an AfCFTA State Party": {
+      "A": "01",
+      "B": "01",
+      "C": "01",
+      "D": "01"
+    },
+    "This Product qualifies as an originating product under the AfCFTA Rules of Origin": {
+      "A": "01",
+      "B": "01",
+      "C": "01",
+      "D": "01"
+    },
+    "This Product is deemed to be originating product under the AfCFTA Rules of Origin": {
+      "A": "10",
+      "B": "10",
+      "C": "10",
+      "D": "10"
+    },
+    "This Product is eligible for preferential tariff treatment under the AfCFTA Agreement": {
+      "A": "01",
+      "B": "01",
+      "C": "01",
+      "D": "01"
+    },
+    "This Product is deemed for preferential tariff treatment under the AfCFTA Agreement": {
+      "A": "10",
+      "B": "10",
+      "C": "10",
+      "D": "10"
+    }
+  }
+}

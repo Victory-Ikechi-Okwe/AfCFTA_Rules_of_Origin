@@ -1,0 +1,330 @@
+{
+  "input": [
+    {
+      "sentence": [
+        { "determiner": "This" },
+        { "noun": "Product" },
+        { "predicate_verb": "was" },
+        { "past_participle_verb": "produced" },
+        { "attribute": "within" },
+        { "description": "the territory of an AfCFTA State Party" }
+      ],
+      "scenarios": {
+        "A": "01",
+        "B": "01",
+        "C": "01",
+        "D": "01",
+        "E": "00",
+        "F": "00",
+        "G": "00"
+      },
+      "sentence_order": [
+        { "id": "1", "value": "determiner" },
+        { "id": "2", "value": "noun" },
+        { "id": "5", "value": "predicate_verb" },
+        { "id": "3", "value": "past_participle_verb" },
+        { "id": "4", "value": "attribute" },
+        { "id": "6", "value": "description" }
+      ]
+    },
+    {
+      "sentence": [
+        { "determiner": "This" },
+        { "noun": "Product" },
+        { "predicate_verb": "is" },
+        { "past_participle_verb": "being exported" },
+        { "attribute": "to" },
+        { "description": "an AfCFTA State Party" }
+      ],
+      "scenarios": {
+        "A": "01",
+        "B": "01",
+        "C": "01",
+        "D": "01",
+        "E": "00",
+        "F": "00",
+        "G": "00"
+      },
+      "sentence_order": [
+        { "id": "1", "value": "determiner" },
+        { "id": "2", "value": "noun" },
+        { "id": "5", "value": "predicate_verb" },
+        { "id": "3", "value": "past_participle_verb" },
+        { "id": "4", "value": "attribute" },
+        { "id": "6", "value": "description" }
+      ]
+    },
+    {
+      "sentence": [
+        { "determiner": "This" },
+        { "noun": "Product" },
+        { "predicate_verb": "is" },
+        { "past_participle_verb": "classified" },
+        { "attribute": "as a type of" },
+        { "description": "Mineral" }
+      ],
+      "scenarios": {
+        "A": "01",
+        "B": "01",
+        "C": "01",
+        "D": "01",
+        "E": "00",
+        "F": "00",
+        "G": "00"
+      },
+      "sentence_order": [
+        { "id": "1", "value": "determiner" },
+        { "id": "2", "value": "noun" },
+        { "id": "5", "value": "predicate_verb" },
+        { "id": "3", "value": "past_participle_verb" },
+        { "id": "4", "value": "attribute" },
+        { "id": "6", "value": "description" }
+      ]
+    },
+    {
+      "sentence": [
+        { "determiner": "This" },
+        { "noun": "Product" },
+        { "predicate_verb": "was" },
+        { "past_participle_verb": "extracted" },
+        { "attribute": "from" },
+        { "description": "the Ground" }
+      ],
+      "scenarios": {
+        "A": "01",
+        "B": "00",
+        "C": "00",
+        "D": "11",
+        "E": "00",
+        "F": "00",
+        "G": "00"
+      },
+      "sentence_order": [
+        { "id": "1", "value": "determiner" },
+        { "id": "2", "value": "noun" },
+        { "id": "5", "value": "predicate_verb" },
+        { "id": "3", "value": "past_participle_verb" },
+        { "id": "4", "value": "attribute" },
+        { "id": "6", "value": "description" }
+      ]
+    },
+    {
+      "sentence": [
+        { "determiner": "This" },
+        { "noun": "Product" },
+        { "predicate_verb": "was" },
+        { "past_participle_verb": "extracted" },
+        { "attribute": "from" },
+        { "description": "the Sea Bed" }
+      ],
+      "scenarios": {
+        "A": "00",
+        "B": "01",
+        "C": "00",
+        "D": "11",
+        "E": "00",
+        "F": "00",
+        "G": "00"
+      },
+      "sentence_order": [
+        { "id": "1", "value": "determiner" },
+        { "id": "2", "value": "noun" },
+        { "id": "5", "value": "predicate_verb" },
+        { "id": "3", "value": "past_participle_verb" },
+        { "id": "4", "value": "attribute" },
+        { "id": "6", "value": "description" }
+      ]
+    },
+    {
+      "sentence": [
+        { "determiner": "This" },
+        { "noun": "Product" },
+        { "predicate_verb": "was" },
+        { "past_participle_verb": "extracted" },
+        { "attribute": "from" },
+        { "description": "below the Sea Bed " }
+      ],
+      "scenarios": {
+        "A": "00",
+        "B": "00",
+        "C": "01",
+        "D": "11",
+        "E": "00",
+        "F": "00",
+        "G": "00"
+      },
+      "sentence_order": [
+        { "id": "1", "value": "determiner" },
+        { "id": "2", "value": "noun" },
+        { "id": "5", "value": "predicate_verb" },
+        { "id": "3", "value": "past_participle_verb" },
+        { "id": "4", "value": "attribute" },
+        { "id": "6", "value": "description" }
+      ]
+    },
+    {
+      "sentence": [
+        { "determiner": "This" },
+        { "noun": "Product" },
+        { "predicate_verb": "was" },
+        { "past_participle_verb": "produced" },
+        { "attribute": "in accordance with" },
+        { "description": "the United Nation Convention on the Law of the Sea" }
+      ],
+      "scenarios": {
+        "A": "01",
+        "B": "01",
+        "C": "01",
+        "D": "10",
+        "E": "00",
+        "F": "00",
+        "G": "00"
+      },
+      "sentence_order": [
+        { "id": "1", "value": "determiner" },
+        { "id": "2", "value": "noun" },
+        { "id": "5", "value": "predicate_verb" },
+        { "id": "3", "value": "past_participle_verb" },
+        { "id": "4", "value": "attribute" },
+        { "id": "6", "value": "description" }
+      ]
+    }
+  ],
+  "output": [
+    {
+      "sentence": [
+        { "determiner": "This" },
+        { "noun": "Product" },
+        { "predicate_verb": "is" },
+        { "past_participle_verb": "considered" },
+        { "attribute": "wholly obtained" },
+        { "description": "in an AfCFTA State Party" }
+      ],
+      "scenarios": {
+        "A": "01",
+        "B": "01",
+        "C": "01",
+        "D": "01",
+        "E": "00",
+        "F": "00",
+        "G": "00"
+      },
+      "sentence_order": [
+        { "id": "1", "value": "determiner" },
+        { "id": "2", "value": "noun" },
+        { "id": "5", "value": "predicate_verb" },
+        { "id": "3", "value": "past_participle_verb" },
+        { "id": "4", "value": "attribute" },
+        { "id": "6", "value": "description" }
+      ]
+    },
+    {
+      "sentence": [
+        { "determiner": "This" },
+        { "noun": "Product" },
+        { "predicate_verb": "qualifies as" },
+        { "past_participle_verb": "" },
+        { "attribute": "an originating product" },
+        { "description": "under the AfCFTA Rules of Origin" }
+      ],
+      "scenarios": {
+        "A": "01",
+        "B": "01",
+        "C": "01",
+        "D": "01",
+        "E": "00",
+        "F": "00",
+        "G": "00"
+      },
+      "sentence_order": [
+        { "id": "1", "value": "determiner" },
+        { "id": "2", "value": "noun" },
+        { "id": "5", "value": "predicate_verb" },
+        { "id": "3", "value": "past_participle_verb" },
+        { "id": "4", "value": "attribute" },
+        { "id": "6", "value": "description" }
+      ]
+    },
+    {
+      "sentence": [
+        { "determiner": "This" },
+        { "noun": "Product" },
+        { "predicate_verb": "is" },
+        { "past_participle_verb": "deemed" },
+        { "attribute": " to be originating product" },
+        { "description": "under the AfCFTA Rules of Origin" }
+      ],
+      "scenarios": {
+        "A": "10",
+        "B": "10",
+        "C": "10",
+        "D": "10",
+        "E": "00",
+        "F": "00",
+        "G": "00"
+      },
+      "sentence_order": [
+        { "id": "1", "value": "determiner" },
+        { "id": "2", "value": "noun" },
+        { "id": "5", "value": "predicate_verb" },
+        { "id": "3", "value": "past_participle_verb" },
+        { "id": "4", "value": "attribute" },
+        { "id": "6", "value": "description" }
+      ]
+    },
+    {
+      "sentence": [
+        { "determiner": "This" },
+        { "noun": "Product" },
+        { "predicate_verb": "is" },
+        { "past_participle_verb": "eligible" },
+        { "attribute": "for preferential tariff treatment" },
+        { "description": "under the AfCFTA Agreement" }
+      ],
+      "scenarios": {
+        "A": "01",
+        "B": "01",
+        "C": "01",
+        "D": "01",
+        "E": "00",
+        "F": "00",
+        "G": "00"
+      },
+      "sentence_order": [
+        { "id": "1", "value": "determiner" },
+        { "id": "2", "value": "noun" },
+        { "id": "5", "value": "predicate_verb" },
+        { "id": "3", "value": "past_participle_verb" },
+        { "id": "4", "value": "attribute" },
+        { "id": "6", "value": "description" }
+      ]
+    },
+    {
+      "sentence": [
+        { "determiner": "This" },
+        { "noun": "Product" },
+        { "predicate_verb": "is" },
+        { "past_participle_verb": "deemed" },
+        { "attribute": "for preferential tariff treatment" },
+        { "description": "under the AfCFTA Agreement" }
+      ],
+      "scenarios": {
+        "A": "10",
+        "B": "10",
+        "C": "10",
+        "D": "10",
+        "E": "00",
+        "F": "00",
+        "G": "00"
+      },
+      "sentence_order": [
+        { "id": "1", "value": "determiner" },
+        { "id": "2", "value": "noun" },
+        { "id": "5", "value": "predicate_verb" },
+        { "id": "3", "value": "past_participle_verb" },
+        { "id": "4", "value": "attribute" },
+        { "id": "6", "value": "description" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+PROPERTIES
+ID wholly_obtained_rule
+VERSION 0
+
+IN EFFECT
+  IN AfCFTA
+
+CONDITIONS
+  produced_in_afcfta_state='true':      [01, 01, 01, 01]
+  exported_to_afcfta_state='true':      [01, 01, 01, 01]
+  classified_as_mineral='true':         [01, 01, 01, 01]
+  extracted_from_ground='true':         [01, 00, 00, 11]
+  extracted_from_seabed='true':         [00, 01, 00, 11]
+  extracted_from_below_seabed='true':   [00, 00, 01, 11]
+  unclos_compliant='true':              [01, 01, 01, 10]
+
+ASSERTIONS
+  wholly_obtained:='true':              [01, 01, 01, 01]
+  qualifies_originating:='true':        [01, 01, 01, 01]
+  deemed_originating:='maybe':          [10, 10, 10, 10]
+  eligible_preferential:='true':        [01, 01, 01, 01]
+  deemed_preferential:='maybe':         [10, 10, 10, 10]

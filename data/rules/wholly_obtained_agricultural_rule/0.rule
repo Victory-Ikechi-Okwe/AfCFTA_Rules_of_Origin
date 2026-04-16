@@ -1,0 +1,23 @@
+PROPERTIES
+ID wholly_obtained_agricultural_rule
+VERSION 0
+
+IN EFFECT
+  IN AfCFTA, TZ UTC
+
+CONDITIONS
+  produced_in_afcfta_state='true':   [01, 01, 01, 01, 11]
+  exported_to_afcfta_state='true':   [01, 01, 01, 01, 11]
+  classified_as_aquatic='true':      [01, 00, 00, 00, 11]
+  classified_as_plant='true':        [00, 01, 00, 00, 11]
+  classified_as_vegetable='true':    [00, 00, 01, 00, 11]
+  classified_as_fruit='true':        [00, 00, 00, 01, 11]
+  grown_in_afcfta='true':            [01, 01, 01, 01, 10]
+  harvested_in_afcfta='true':        [01, 01, 01, 01, 10]
+
+ASSERTIONS
+  wholly_obtained:='true':           [01, 01, 01, 01, 00]
+  qualifies_originating:='true':     [01, 01, 01, 01, 00]
+  deemed_originating:='maybe':       [10, 10, 10, 10, 00]
+  eligible_preferential:='true':     [01, 01, 01, 01, 00]
+  deemed_preferential:='maybe':      [10, 10, 10, 10, 00]

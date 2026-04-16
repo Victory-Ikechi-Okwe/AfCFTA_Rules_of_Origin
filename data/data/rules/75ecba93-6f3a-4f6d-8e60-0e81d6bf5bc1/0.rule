@@ -1,0 +1,83 @@
+{
+  "id": "wholly_obtained_rule",
+  "version": 0,
+
+  "when": [
+    {
+      "if": "This Product was produced within the territory of an AfCFTA State Party",
+      "scenarios": [
+        ["A", "01"], ["B", "01"], ["C", "01"], ["D", "01"]
+      ]
+    },
+    {
+      "if": "This Product is being exported to an AfCFTA State Party",
+      "scenarios": [
+        ["A", "01"], ["B", "01"], ["C", "01"], ["D", "01"]
+      ]
+    },
+    {
+      "if": "This Product is classified as a type of Mineral",
+      "scenarios": [
+        ["A", "01"], ["B", "01"], ["C", "01"], ["D", "01"]
+      ]
+    },
+    {
+      "if": "This Product was extracted from the Ground",
+      "scenarios": [
+        ["A", "01"], ["B", "00"], ["C", "00"], ["D", "11"]
+      ]
+    },
+    {
+      "if": "This Product was extracted from the Sea Bed",
+      "scenarios": [
+        ["A", "00"], ["B", "01"], ["C", "00"], ["D", "11"]
+      ]
+    },
+    {
+      "if": "This Product was extracted from below the Sea Bed ",
+      "scenarios": [
+        ["A", "00"], ["B", "00"], ["C", "01"], ["D", "11"]
+      ]
+    },
+    {
+      "if": "This Product was produced in accordance with the United Nation Convention on the Law of the Sea",
+      "scenarios": [
+        ["A", "01"], ["B", "01"], ["C", "01"], ["D", "10"]
+      ]
+    }
+  ],
+
+  "then": [
+    {
+      "assert": "This Product is considered wholly obtained in an AfCFTA State Party",
+      "scenarios": [
+        ["A", "01"], ["B", "01"], ["C", "01"], ["D", "01"]
+      ]
+    },
+    {
+      "assert": "This Product qualifies as an originating product under the AfCFTA Rules of Origin",
+      "scenarios": [
+        ["A", "01"], ["B", "01"], ["C", "01"], ["D", "01"]
+      ]
+    },
+    {
+      "assert": "This Product is deemed to be originating product under the AfCFTA Rules of Origin",
+      "scenarios": [
+        ["A", "10"], ["B", "10"], ["C", "10"], ["D", "10"]
+      ]
+    },
+    {
+      "assert": "This Product is eligible for preferential tariff treatment under the AfCFTA Agreement",
+      "scenarios": [
+        ["A", "01"], ["B", "01"], ["C", "01"], ["D", "01"]
+      ]
+    },
+    {
+      "assert": "This Product is deemed for preferential tariff treatment under the AfCFTA Agreement",
+      "scenarios": [
+        ["A", "10"], ["B", "10"], ["C", "10"], ["D", "10"]
+      ]
+    }
+  ]
+}
+

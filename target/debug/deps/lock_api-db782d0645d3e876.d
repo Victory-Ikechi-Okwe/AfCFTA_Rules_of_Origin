@@ -1,0 +1,10 @@
+/home/victory-ikechi-okwe/prod-impl/target/debug/deps/lock_api-db782d0645d3e876.d: /home/victory-ikechi-okwe/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/lock_api-0.4.12/src/lib.rs /home/victory-ikechi-okwe/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/lock_api-0.4.12/src/mutex.rs /home/victory-ikechi-okwe/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/lock_api-0.4.12/src/remutex.rs /home/victory-ikechi-okwe/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/lock_api-0.4.12/src/rwlock.rs
+
+/home/victory-ikechi-okwe/prod-impl/target/debug/deps/liblock_api-db782d0645d3e876.rlib: /home/victory-ikechi-okwe/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/lock_api-0.4.12/src/lib.rs /home/victory-ikechi-okwe/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/lock_api-0.4.12/src/mutex.rs /home/victory-ikechi-okwe/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/lock_api-0.4.12/src/remutex.rs /home/victory-ikechi-okwe/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/lock_api-0.4.12/src/rwlock.rs
+
+/home/victory-ikechi-okwe/prod-impl/target/debug/deps/liblock_api-db782d0645d3e876.rmeta: /home/victory-ikechi-okwe/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/lock_api-0.4.12/src/lib.rs /home/victory-ikechi-okwe/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/lock_api-0.4.12/src/mutex.rs /home/victory-ikechi-okwe/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/lock_api-0.4.12/src/remutex.rs /home/victory-ikechi-okwe/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/lock_api-0.4.12/src/rwlock.rs
+
+/home/victory-ikechi-okwe/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/lock_api-0.4.12/src/lib.rs:
+/home/victory-ikechi-okwe/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/lock_api-0.4.12/src/mutex.rs:
+/home/victory-ikechi-okwe/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/lock_api-0.4.12/src/remutex.rs:
+/home/victory-ikechi-okwe/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/lock_api-0.4.12/src/rwlock.rs:
