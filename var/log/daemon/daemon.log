@@ -1,0 +1,5 @@
+[2026-04-13T19:36:44Z DEBUG daemon] logger initialized with log dir "var/log/daemon"
+[2026-04-13T19:36:44Z INFO  daemon] starting
+[2026-04-13T19:36:44Z DEBUG daemon] run dir is "var/run/daemon"
+[2026-04-13T19:36:44Z DEBUG daemon] Daemonizing
+[2026-04-13T19:36:44Z INFO  daemon] select

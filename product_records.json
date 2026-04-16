@@ -1,0 +1,785 @@
+[
+  {
+    "timestamp": "2026-03-31T11:04:42Z",
+    "product_name": "Gold",
+    "company_name": "Shell",
+    "originating_state": "South Africa",
+    "destination_state": "Nigeria",
+    "conditions": {
+      "produced_in_afcfta_state": "true",
+      "exported_to_afcfta_state": "true",
+      "classified_as_mineral": "true",
+      "extracted_from_ground": "true",
+      "extracted_from_seabed": "false",
+      "extracted_from_below_seabed": "true",
+      "unclos_compliant": "true"
+    },
+    "rule_id": "wholly_obtained_rule",
+    "rule_version": "3",
+    "scenario": "Case D",
+    "assertions": [
+      {
+        "key": "wholly_obtained",
+        "outcome": "TRUE",
+        "statement": "It is hereby determined that this product is confirmed as being wholly obtained within South Africa, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "key": "qualifies_originating",
+        "outcome": "TRUE",
+        "statement": "This product is confirmed as being as an originating product of South Africa, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "key": "deemed_originating",
+        "outcome": "MAYBE",
+        "statement": "This product may potentially be deemed to be an originating product of South Africa, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "key": "eligible_preferential",
+        "outcome": "TRUE",
+        "statement": "This product is confirmed as being eligible for preferential tariff treatment upon entry into Nigeria, an AfCFTA State Party, under the AfCFTA Agreement."
+      },
+      {
+        "key": "deemed_preferential",
+        "outcome": "MAYBE",
+        "statement": "This product may potentially be deemed eligible for preferential tariff treatment upon entry into Nigeria, an AfCFTA State Party, under the AfCFTA Agreement."
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-03-31T11:44:47Z",
+    "product_name": "Crude Oil",
+    "company_name": "Seplat",
+    "originating_state": "Nigeria",
+    "destination_state": "Ghana",
+    "conditions": {
+      "produced_in_afcfta_state": "true",
+      "exported_to_afcfta_state": "true",
+      "classified_as_mineral": "true",
+      "extracted_from_ground": "true",
+      "extracted_from_seabed": "true",
+      "extracted_from_below_seabed": "true",
+      "unclos_compliant": "true"
+    },
+    "rule_id": "wholly_obtained_rule",
+    "rule_version": "3",
+    "scenario": "Case D",
+    "assertions": [
+      {
+        "key": "wholly_obtained",
+        "outcome": "TRUE",
+        "statement": "It is hereby determined that this product is confirmed as being wholly obtained within Nigeria, an AfCFTA State Party."
+      },
+      {
+        "key": "qualifies_originating",
+        "outcome": "TRUE",
+        "statement": "This product is confirmed as being an originating product of Nigeria, an AfCFTA State Party."
+      },
+      {
+        "key": "deemed_originating",
+        "outcome": "MAYBE",
+        "statement": "This product may potentially be deemed to be an originating product of Nigeria, an AfCFTA State Party."
+      },
+      {
+        "key": "eligible_preferential",
+        "outcome": "TRUE",
+        "statement": "This product is confirmed as being eligible for preferential tariff treatment upon entry into Ghana, an AfCFTA State Party."
+      },
+      {
+        "key": "deemed_preferential",
+        "outcome": "MAYBE",
+        "statement": "This product may potentially be deemed eligible for preferential tariff treatment upon entry into Ghana, an AfCFTA State Party."
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-03-31T12:01:10Z",
+    "product_name": "Cocoa",
+    "company_name": "Sterling",
+    "originating_state": "Burkina Faso",
+    "destination_state": "Mali",
+    "conditions": {
+      "produced_in_afcfta_state": "true",
+      "exported_to_afcfta_state": "true",
+      "classified_as_mineral": "false",
+      "extracted_from_ground": "false",
+      "extracted_from_seabed": "false",
+      "extracted_from_below_seabed": "false",
+      "unclos_compliant": "false"
+    },
+    "rule_id": "wholly_obtained_rule",
+    "rule_version": "3",
+    "scenario": "No matching scenario",
+    "assertions": []
+  },
+  {
+    "timestamp": "2026-03-31T12:25:51Z",
+    "product_name": "Cocoa",
+    "company_name": "Ovi Farms",
+    "originating_state": "Eswatini",
+    "destination_state": "Niger",
+    "conditions": {
+      "produced_in_afcfta_state": "true",
+      "exported_to_afcfta_state": "true",
+      "classified_as_mineral": "true",
+      "extracted_from_ground": "false",
+      "extracted_from_seabed": "false",
+      "extracted_from_below_seabed": "false",
+      "unclos_compliant": "false"
+    },
+    "rule_id": "wholly_obtained_rule",
+    "rule_version": "3",
+    "scenario": "Case D",
+    "assertions": [
+      {
+        "key": "wholly_obtained",
+        "outcome": "TRUE",
+        "statement": "It is hereby determined that this product is confirmed as being wholly obtained within Eswatini, an AfCFTA State Party."
+      },
+      {
+        "key": "qualifies_originating",
+        "outcome": "TRUE",
+        "statement": "This product is confirmed as being an originating product of Eswatini, an AfCFTA State Party."
+      },
+      {
+        "key": "deemed_originating",
+        "outcome": "MAYBE",
+        "statement": "This product may potentially be deemed to be an originating product of Eswatini, an AfCFTA State Party."
+      },
+      {
+        "key": "eligible_preferential",
+        "outcome": "TRUE",
+        "statement": "This product is confirmed as being eligible for preferential tariff treatment upon entry into Niger, an AfCFTA State Party."
+      },
+      {
+        "key": "deemed_preferential",
+        "outcome": "MAYBE",
+        "statement": "This product may potentially be deemed eligible for preferential tariff treatment upon entry into Niger, an AfCFTA State Party."
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-03-31T12:27:29Z",
+    "product_name": "Cocoa",
+    "company_name": "Ghana Farms",
+    "originating_state": "Angola",
+    "destination_state": "Djibouti",
+    "conditions": {
+      "produced_in_afcfta_state": "true",
+      "exported_to_afcfta_state": "true",
+      "classified_as_mineral": "false",
+      "extracted_from_ground": "false",
+      "extracted_from_seabed": "false",
+      "extracted_from_below_seabed": "false",
+      "unclos_compliant": "false"
+    },
+    "rule_id": "wholly_obtained_rule",
+    "rule_version": "3",
+    "scenario": "No matching scenario",
+    "assertions": []
+  },
+  {
+    "timestamp": "2026-03-31T14:16:37Z",
+    "product_name": "Cocoa",
+    "company_name": "Victory Farms",
+    "originating_state": "Nigeria",
+    "destination_state": "Egypt",
+    "conditions": {
+      "produced_in_afcfta_state": "true",
+      "exported_to_afcfta_state": "true",
+      "classified_as_mineral": "true",
+      "extracted_from_ground": "true",
+      "extracted_from_seabed": "false",
+      "extracted_from_below_seabed": "false",
+      "unclos_compliant": "true"
+    },
+    "rule_id": "wholly_obtained_rule",
+    "rule_version": "3",
+    "scenario": "Case A, Case D",
+    "assertions": [
+      {
+        "key": "wholly_obtained",
+        "outcome": "TRUE",
+        "statement": "It is hereby determined that this product is confirmed as being wholly obtained within Nigeria, an AfCFTA State Party."
+      },
+      {
+        "key": "qualifies_originating",
+        "outcome": "TRUE",
+        "statement": "This product is confirmed as being an originating product of Nigeria, an AfCFTA State Party."
+      },
+      {
+        "key": "deemed_originating",
+        "outcome": "MAYBE",
+        "statement": "This product may potentially be deemed to be an originating product of Nigeria, an AfCFTA State Party."
+      },
+      {
+        "key": "eligible_preferential",
+        "outcome": "TRUE",
+        "statement": "This product is confirmed as being eligible for preferential tariff treatment upon entry into Egypt, an AfCFTA State Party."
+      },
+      {
+        "key": "deemed_preferential",
+        "outcome": "MAYBE",
+        "statement": "This product may potentially be deemed eligible for preferential tariff treatment upon entry into Egypt, an AfCFTA State Party."
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-03-31T14:30:22Z",
+    "product_name": "Cassava",
+    "company_name": "Sterling",
+    "originating_state": "Angola",
+    "destination_state": "Chad",
+    "conditions": {
+      "produced_in_afcfta_state": "true",
+      "exported_to_afcfta_state": "true",
+      "classified_as_mineral": "false",
+      "extracted_from_ground": "true",
+      "extracted_from_seabed": "false",
+      "extracted_from_below_seabed": "false",
+      "unclos_compliant": "false"
+    },
+    "rule_id": "wholly_obtained_rule",
+    "rule_version": "3",
+    "scenario": "No matching scenario",
+    "assertions": []
+  },
+  {
+    "timestamp": "2026-04-01T11:55:56Z",
+    "product_name": "Cassava",
+    "company_name": "Logs Farm",
+    "originating_state": "Nigeria",
+    "destination_state": "Zimbabwe",
+    "conditions": {
+      "produced_in_afcfta_state": "true",
+      "exported_to_afcfta_state": "true",
+      "classified_as_mineral": "true",
+      "extracted_from_ground": "true",
+      "extracted_from_seabed": "false",
+      "extracted_from_below_seabed": "false",
+      "unclos_compliant": "false"
+    },
+    "_rule_id": "wholly_obtained_rule",
+    "_rule_version": "3",
+    "_scenario": "Case D",
+    "findings": [
+      {
+        "outcome": "YES",
+        "statement": "It is hereby determined that this product is confirmed as being wholly obtained within Nigeria, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "YES",
+        "statement": "This product is confirmed as being an originating product of Nigeria, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "YES OR NO",
+        "statement": "This product may potentially be deemed to be an originating product of Nigeria, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "YES",
+        "statement": "This product is confirmed as being eligible for preferential tariff treatment upon entry into Zimbabwe, an AfCFTA State Party, under the AfCFTA Agreement."
+      },
+      {
+        "outcome": "YES OR NO",
+        "statement": "This product may potentially be deemed eligible for preferential tariff treatment upon entry into Zimbabwe, an AfCFTA State Party, under the AfCFTA Agreement."
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-04-02T12:26:15Z",
+    "product_name": "Yam",
+    "company_name": "Victory",
+    "originating_state": "Cameroon",
+    "destination_state": "Togo",
+    "conditions": {
+      "produced_in_afcfta_state": "true",
+      "exported_to_afcfta_state": "true",
+      "classified_as_mineral": "false",
+      "extracted_from_ground": "true",
+      "extracted_from_seabed": "false",
+      "extracted_from_below_seabed": "false",
+      "unclos_compliant": "true"
+    },
+    "_rule_id": "wholly_obtained_rule",
+    "_rule_version": "3",
+    "_scenario": "No matching scenario",
+    "findings": []
+  },
+  {
+    "timestamp": "2026-04-10T11:52:13Z",
+    "product_name": "Yam",
+    "company_name": "Nigerian Farms Limited",
+    "originating_state": "Nigeria",
+    "destination_state": "Togo",
+    "conditions": {
+      "produced_in_afcfta_state": "true",
+      "exported_to_afcfta_state": "true",
+      "classified_as_aquatic": "false",
+      "classified_as_plant": "false",
+      "classified_as_vegetable": "false",
+      "classified_as_fruit": "true",
+      "grown_in_afcfta": "false",
+      "harvested_in_afcfta": "false"
+    },
+    "_rule_id": "wholly_obtained_agricultural_rule",
+    "_rule_version": "1",
+    "_scenario": "Case E",
+    "findings": [
+      {
+        "outcome": "NO",
+        "statement": "It is hereby determined that this product is determined to not be wholly obtained within Nigeria, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "NO",
+        "statement": "This product is determined to not be an originating product of Nigeria, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "NO",
+        "statement": "This product is determined to not be deemed to be an originating product of Nigeria, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "NO",
+        "statement": "This product is determined to not be eligible for preferential tariff treatment upon entry into Togo, an AfCFTA State Party, under the AfCFTA Agreement."
+      },
+      {
+        "outcome": "NO",
+        "statement": "This product is determined to not be deemed eligible for preferential tariff treatment upon entry into Togo, an AfCFTA State Party, under the AfCFTA Agreement."
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-04-10T12:11:18Z",
+    "product_name": "Gold",
+    "company_name": "Sterling Mines",
+    "originating_state": "South Africa",
+    "destination_state": "Uganda",
+    "conditions": {
+      "produced_in_afcfta_state": "true",
+      "exported_to_afcfta_state": "true",
+      "classified_as_mineral": "true",
+      "extracted_from_ground": "false",
+      "extracted_from_seabed": "true",
+      "extracted_from_below_seabed": "false",
+      "unclos_compliant": "false"
+    },
+    "_rule_id": "wholly_obtained_rule",
+    "_rule_version": "3",
+    "_scenario": "Case D",
+    "findings": [
+      {
+        "outcome": "YES",
+        "statement": "It is hereby determined that this product is confirmed as being wholly obtained within South Africa, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "YES",
+        "statement": "This product is confirmed as being an originating product of South Africa, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "YES OR NO",
+        "statement": "This product may potentially be deemed to be an originating product of South Africa, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "YES",
+        "statement": "This product is confirmed as being eligible for preferential tariff treatment upon entry into Uganda, an AfCFTA State Party, under the AfCFTA Agreement."
+      },
+      {
+        "outcome": "YES OR NO",
+        "statement": "This product may potentially be deemed eligible for preferential tariff treatment upon entry into Uganda, an AfCFTA State Party, under the AfCFTA Agreement."
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-04-10T12:12:31Z",
+    "product_name": "Gold",
+    "company_name": "Adis Mines",
+    "originating_state": "Rwanda",
+    "destination_state": "Tanzania",
+    "conditions": {
+      "produced_in_afcfta_state": "true",
+      "exported_to_afcfta_state": "true",
+      "classified_as_mineral": "false",
+      "extracted_from_ground": "false",
+      "extracted_from_seabed": "false",
+      "extracted_from_below_seabed": "true",
+      "unclos_compliant": "false"
+    },
+    "_rule_id": "wholly_obtained_rule",
+    "_rule_version": "3",
+    "_scenario": "No matching scenario",
+    "findings": []
+  },
+  {
+    "timestamp": "2026-04-10T12:21:41Z",
+    "product_name": "Crude Oil",
+    "company_name": "Seplat",
+    "originating_state": "Algeria",
+    "destination_state": "Congo (DRC)",
+    "conditions": {
+      "produced_in_afcfta_state": "true",
+      "exported_to_afcfta_state": "true",
+      "classified_as_mineral": "true",
+      "extracted_from_ground": "false",
+      "extracted_from_seabed": "true",
+      "extracted_from_below_seabed": "false",
+      "unclos_compliant": "false"
+    },
+    "_rule_id": "wholly_obtained_rule",
+    "_rule_version": "3",
+    "_scenario": "Case D",
+    "findings": [
+      {
+        "outcome": "YES",
+        "statement": "It is hereby determined that this product is confirmed as being wholly obtained within Algeria, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "YES",
+        "statement": "This product is confirmed as being an originating product of Algeria, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "YES OR NO",
+        "statement": "This product may potentially be deemed to be an originating product of Algeria, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "YES",
+        "statement": "This product is confirmed as being eligible for preferential tariff treatment upon entry into Congo (DRC), an AfCFTA State Party, under the AfCFTA Agreement."
+      },
+      {
+        "outcome": "YES OR NO",
+        "statement": "This product may potentially be deemed eligible for preferential tariff treatment upon entry into Congo (DRC), an AfCFTA State Party, under the AfCFTA Agreement."
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-04-10T12:30:38Z",
+    "product_name": "Yam",
+    "company_name": "Oti Farms",
+    "originating_state": "Angola",
+    "destination_state": "Cameroon",
+    "conditions": {
+      "produced_in_afcfta_state": "true",
+      "exported_to_afcfta_state": "true",
+      "classified_as_aquatic": "false",
+      "classified_as_plant": "true",
+      "classified_as_vegetable": "false",
+      "classified_as_fruit": "false",
+      "grown_in_afcfta": "true",
+      "harvested_in_afcfta": "false"
+    },
+    "_rule_id": "wholly_obtained_agricultural_rule",
+    "_rule_version": "1",
+    "_scenario": "Case E",
+    "findings": [
+      {
+        "outcome": "NO",
+        "statement": "It is hereby determined that this product is determined to not be wholly obtained within Angola, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "NO",
+        "statement": "This product is determined to not be an originating product of Angola, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "NO",
+        "statement": "This product is determined to not be deemed to be an originating product of Angola, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "NO",
+        "statement": "This product is determined to not be eligible for preferential tariff treatment upon entry into Cameroon, an AfCFTA State Party, under the AfCFTA Agreement."
+      },
+      {
+        "outcome": "NO",
+        "statement": "This product is determined to not be deemed eligible for preferential tariff treatment upon entry into Cameroon, an AfCFTA State Party, under the AfCFTA Agreement."
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-04-10T12:33:09Z",
+    "product_name": "Cocoa",
+    "company_name": "Inish Cocoa",
+    "originating_state": "Algeria",
+    "destination_state": "Benin",
+    "conditions": {
+      "produced_in_afcfta_state": "true",
+      "exported_to_afcfta_state": "true",
+      "classified_as_aquatic": "false",
+      "classified_as_plant": "true",
+      "classified_as_vegetable": "false",
+      "classified_as_fruit": "false",
+      "grown_in_afcfta": "true",
+      "harvested_in_afcfta": "true"
+    },
+    "_rule_id": "wholly_obtained_agricultural_rule",
+    "_rule_version": "1",
+    "_scenario": "Case B, Case E",
+    "findings": [
+      {
+        "outcome": "YES",
+        "statement": "It is hereby determined that this product is confirmed as being wholly obtained within Algeria, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "YES",
+        "statement": "This product is confirmed as being an originating product of Algeria, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "YES OR NO",
+        "statement": "This product may potentially be deemed to be an originating product of Algeria, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "YES",
+        "statement": "This product is confirmed as being eligible for preferential tariff treatment upon entry into Benin, an AfCFTA State Party, under the AfCFTA Agreement."
+      },
+      {
+        "outcome": "YES OR NO",
+        "statement": "This product may potentially be deemed eligible for preferential tariff treatment upon entry into Benin, an AfCFTA State Party, under the AfCFTA Agreement."
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-04-10T12:49:27Z",
+    "product_name": "Pepper",
+    "company_name": "Scint Farms",
+    "originating_state": "Cameroon",
+    "destination_state": "Egypt",
+    "conditions": {
+      "produced_in_afcfta_state": "true",
+      "exported_to_afcfta_state": "true",
+      "classified_as_aquatic": "false",
+      "classified_as_plant": "false",
+      "classified_as_vegetable": "true",
+      "classified_as_fruit": "false",
+      "grown_in_afcfta": "true",
+      "harvested_in_afcfta": "false"
+    },
+    "_rule_id": "wholly_obtained_agricultural_rule",
+    "_rule_version": "1",
+    "_scenario": "Case E",
+    "findings": [
+      {
+        "outcome": "NO",
+        "statement": "It is hereby determined that this product is determined to not be wholly obtained within Cameroon, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "NO",
+        "statement": "This product is determined to not be an originating product of Cameroon, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "NO",
+        "statement": "This product is determined to not be deemed to be an originating product of Cameroon, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "NO",
+        "statement": "This product is determined to not be eligible for preferential tariff treatment upon entry into Egypt, an AfCFTA State Party, under the AfCFTA Agreement."
+      },
+      {
+        "outcome": "NO",
+        "statement": "This product is determined to not be deemed eligible for preferential tariff treatment upon entry into Egypt, an AfCFTA State Party, under the AfCFTA Agreement."
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-04-10T12:59:55Z",
+    "product_name": "Gold",
+    "company_name": "Harmony Gold",
+    "originating_state": "Angola",
+    "destination_state": "Egypt",
+    "conditions": {
+      "produced_in_afcfta_state": "true",
+      "exported_to_afcfta_state": "true",
+      "classified_as_mineral": "true",
+      "extracted_from_ground": "true",
+      "extracted_from_seabed": "false",
+      "extracted_from_below_seabed": "false",
+      "unclos_compliant": "true"
+    },
+    "_rule_id": "wholly_obtained_rule",
+    "_rule_version": "3",
+    "_scenario": "Case A, Case D",
+    "findings": [
+      {
+        "outcome": "YES",
+        "statement": "It is hereby determined that this product is confirmed as being wholly obtained within Angola, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "YES",
+        "statement": "This product is confirmed as being an originating product of Angola, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "YES OR NO",
+        "statement": "This product may potentially be deemed to be an originating product of Angola, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "YES",
+        "statement": "This product is confirmed as being eligible for preferential tariff treatment upon entry into Egypt, an AfCFTA State Party, under the AfCFTA Agreement."
+      },
+      {
+        "outcome": "YES OR NO",
+        "statement": "This product may potentially be deemed eligible for preferential tariff treatment upon entry into Egypt, an AfCFTA State Party, under the AfCFTA Agreement."
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-04-10T14:40:09Z",
+    "product_name": "Cocoa",
+    "company_name": "Victory Farm",
+    "originating_state": "Burkina Faso",
+    "destination_state": "Egypt",
+    "conditions": {
+      "produced_in_afcfta_state": "true",
+      "exported_to_afcfta_state": "true",
+      "classified_as_aquatic": "false",
+      "classified_as_plant": "true",
+      "classified_as_vegetable": "false",
+      "classified_as_fruit": "false",
+      "grown_in_afcfta": "true",
+      "harvested_in_afcfta": "true"
+    },
+    "_rule_id": "wholly_obtained_agricultural_rule",
+    "_rule_version": "1",
+    "_scenario": "Case B, Case E",
+    "findings": [
+      {
+        "outcome": "YES",
+        "statement": "It is hereby determined that this product is confirmed as being wholly obtained within Burkina Faso, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "YES",
+        "statement": "This product is confirmed as being an originating product of Burkina Faso, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "YES OR NO",
+        "statement": "This product may potentially be deemed to be an originating product of Burkina Faso, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "YES",
+        "statement": "This product is confirmed as being eligible for preferential tariff treatment upon entry into Egypt, an AfCFTA State Party, under the AfCFTA Agreement."
+      },
+      {
+        "outcome": "YES OR NO",
+        "statement": "This product may potentially be deemed eligible for preferential tariff treatment upon entry into Egypt, an AfCFTA State Party, under the AfCFTA Agreement."
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-04-10T14:56:45Z",
+    "product_name": "Cocoa",
+    "company_name": "Victory",
+    "originating_state": "Botswana",
+    "destination_state": "Angola",
+    "conditions": {
+      "produced_in_afcfta_state": "true",
+      "exported_to_afcfta_state": "true",
+      "classified_as_aquatic": "false",
+      "classified_as_plant": "true",
+      "classified_as_vegetable": "false",
+      "classified_as_fruit": "false",
+      "grown_in_afcfta": "true",
+      "harvested_in_afcfta": "true"
+    },
+    "_rule_id": "wholly_obtained_agricultural_rule",
+    "_rule_version": "1",
+    "_scenario": "Case B, Case E",
+    "findings": [
+      {
+        "outcome": "YES",
+        "statement": "TRUE"
+      },
+      {
+        "outcome": "YES",
+        "statement": "TRUE"
+      },
+      {
+        "outcome": "YES OR NO",
+        "statement": "MAYBE"
+      },
+      {
+        "outcome": "YES",
+        "statement": "TRUE"
+      },
+      {
+        "outcome": "YES OR NO",
+        "statement": "MAYBE"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-04-10T15:10:04Z",
+    "product_name": "Cocoa",
+    "company_name": "Fit",
+    "originating_state": "Algeria",
+    "destination_state": "Angola",
+    "conditions": {
+      "produced_in_afcfta_state": "true",
+      "exported_to_afcfta_state": "true",
+      "classified_as_aquatic": "false",
+      "classified_as_plant": "true",
+      "classified_as_vegetable": "false",
+      "classified_as_fruit": "false",
+      "grown_in_afcfta": "true",
+      "harvested_in_afcfta": "true"
+    },
+    "_rule_id": "wholly_obtained_agricultural_rule",
+    "_rule_version": "1",
+    "_scenario": "Case B, Case E",
+    "findings": [
+      {
+        "outcome": "YES",
+        "statement": "It is hereby determined that this product is confirmed as being wholly obtained within Algeria, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "YES",
+        "statement": "This product is confirmed as being an originating product of Algeria, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "YES OR NO",
+        "statement": "This product may potentially be deemed to be an originating product of Algeria, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "YES",
+        "statement": "This product is confirmed as being eligible for preferential tariff treatment upon entry into Angola, an AfCFTA State Party, under the AfCFTA Agreement."
+      },
+      {
+        "outcome": "YES OR NO",
+        "statement": "This product may potentially be deemed eligible for preferential tariff treatment upon entry into Angola, an AfCFTA State Party, under the AfCFTA Agreement."
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-04-13T20:01:24Z",
+    "product_name": "Crude Oil",
+    "company_name": "Seplat",
+    "originating_state": "Nigeria",
+    "destination_state": "Ghana",
+    "conditions": {
+      "produced_in_afcfta_state": "true",
+      "exported_to_afcfta_state": "true",
+      "classified_as_mineral": "true",
+      "extracted_from_ground": "false",
+      "extracted_from_seabed": "true",
+      "extracted_from_below_seabed": "false",
+      "unclos_compliant": "true"
+    },
+    "_rule_id": "wholly_obtained_rule",
+    "_rule_version": "3",
+    "_scenario": "Case B, Case D",
+    "findings": [
+      {
+        "outcome": "YES",
+        "statement": "It is hereby determined that this product is confirmed as being wholly obtained within Nigeria, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "YES",
+        "statement": "This product is confirmed as being an originating product of Nigeria, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "YES OR NO",
+        "statement": "This product may potentially be deemed to be an originating product of Nigeria, an AfCFTA State Party, under the AfCFTA Rules of Origin."
+      },
+      {
+        "outcome": "YES",
+        "statement": "This product is confirmed as being eligible for preferential tariff treatment upon entry into Ghana, an AfCFTA State Party, under the AfCFTA Agreement."
+      },
+      {
+        "outcome": "YES OR NO",
+        "statement": "This product may potentially be deemed eligible for preferential tariff treatment upon entry into Ghana, an AfCFTA State Party, under the AfCFTA Agreement."
+      }
+    ]
+  }
+]

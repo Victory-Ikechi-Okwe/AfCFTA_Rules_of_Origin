@@ -17,7 +17,7 @@ pub struct InEffect {
 
 fn dt_from_str(s: &str) -> Option<chrono::DateTime<Utc>> {
     match NaiveDateTime::parse_from_str(s, "%Y-%m-%dT%H:%M") {
-        Ok(dt) => Some(DateTime::from_naive_utc_and_offset(dt, Utc)),
+        Ok(dt) => Some(DateTime::from_utc(dt, Utc)),
         _ => None,
     }
 }
@@ -130,7 +130,7 @@ impl Condition {
 }
 
 #[derive(Clone, Debug)]
-pub struct AssertedValue(pub String, pub String);
+struct AssertedValue(String, String);
 
 #[derive(Clone, Debug)]
 pub struct Assertion {
@@ -138,9 +138,11 @@ pub struct Assertion {
     pub cases: Vec<Case>,
 }
 
+
 impl Assertion {
     pub fn new(k: &str, v: &str, cases: &Vec<Case>) -> Self {
         Assertion {
+            // only one value is supported right now
             vals: vec![AssertedValue(k.to_string(), v.to_string())],
             cases: cases.to_vec(),
         }
@@ -207,57 +209,4 @@ impl Rule {
     pub fn id(&self) -> String {
         self.prop("ID").expect("ID should have been generated")
     }
-}
-
-pub fn eval_conds(conds: &Vec<Condition>, doc: &serde_json::Value) -> Vec<usize> {
-    let result = conds.iter().fold(u64::MAX, |res_bits, cond| {
-        let ac_val = match &doc[&cond.key] {
-            serde_json::Value::String(s) => s.clone(),
-            serde_json::Value::Bool(b) => String::from(if *b { "true" } else { "false" }),
-            serde_json::Value::Number(n) => n.to_string(),
-            _ => String::new(),
-        };
-        let matches = cond.matches(&ac_val);
-        let case_bits = cond.cases.iter().enumerate().fold(0u64, |acc, (i, case)| {
-            let b = match case {
-                Case::False => !matches,
-                Case::True => matches,
-                Case::Maybe => true,
-                Case::Both => true,
-                Case::Invalid => false,
-            };
-            if b { acc | 1 << i } else { acc }
-        });
-        res_bits & case_bits
-    });
-    let len = conds.first().map(|c| c.cases.len()).unwrap_or(0);
-    (0..len).filter(|i| (result & (1 << i)) > 0).collect()
-}
-
-pub fn print_results(rule: &Rule, idxs: &Vec<usize>) {
-    let case_labels = ["A", "B", "C", "D", "E", "F", "G", "H"];
-    println!("\n=== Scenario Result ===");
-    if idxs.is_empty() {
-        println!("No matching scenario found for this document.");
-        return;
-    }
-    for i in idxs {
-        let label = case_labels.get(*i).unwrap_or(&"?");
-        println!("Matched scenario: Case {}", label);
-    }
-    println!("\n--- Assertions ---");
-    for asrt in &rule.assertions {
-        let reduced = asrt.reduce(idxs);
-        for (val, case) in asrt.vals.iter().zip(reduced.cases.iter()) {
-            let outcome = match case {
-                Case::True => "TRUE",
-                Case::False => "FALSE",
-                Case::Maybe => "MAYBE",
-                Case::Both => "TRUE (and possibly false)",
-                Case::Invalid => "INVALID",
-            };
-            println!("  {} => {}", val.0, outcome);
-        }
-    }
-    println!("======================\n");
 }
